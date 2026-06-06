@@ -1,0 +1,3 @@
+<launch>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lidar_calibration)/rviz/calibration.rviz"/>
+</launch>

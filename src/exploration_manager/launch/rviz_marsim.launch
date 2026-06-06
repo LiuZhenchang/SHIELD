@@ -1,0 +1,5 @@
+<launch>
+  <arg name="drone_id" default="1"/>
+  <arg name="scene_size" default="large"/>
+  <node name="rviz_test_$(arg drone_id)" pkg="rviz" type="rviz" output="log" args="-d $(find exploration_manager)/config/marsim_$(arg scene_size).rviz" />
+</launch>

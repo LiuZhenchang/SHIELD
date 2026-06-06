@@ -1,0 +1,27 @@
+<launch>
+
+	<!-- Debug info -->
+	<!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find exploration_manager)/config/debug.config"/> -->
+
+	<arg name="drone_id" default="1" />
+	<arg name="cloud_topic" default="/livox/lidar_pcl" />
+	<arg name="frame_id" default="map" />
+
+
+	<node pkg="pointcloud_filter" name="lidar_filter" type="pointcloud_filter_node" output="screen">
+		<remap from="/cloud_original" to="$(arg cloud_topic)" />
+		<remap from="/cloud_filtered_sensor" to="/lidar_filtered_sensor" />
+		<remap from="/cloud_filtered_sensor_inFov" to="/lidar_filtered_sensor_inFov" />
+
+		<param name="pointcloud_filter/frame_id" value="$(arg frame_id)"/>
+		<param name="pointcloud_filter/cloud_type" value="2" type="int"/>
+		<param name="pointcloud_filter/min_ray_length" value="0.3" type="double"/>
+		<param name="pointcloud_filter/max_ray_length" value="25.0" type="double"/>
+		<param name="pointcloud_filter/leaf_size" value="0.1" type="double"/>
+		<param name="pointcloud_filter/fov_constraint" value="true" type="bool"/>
+		<param name="pointcloud_filter/theta_max" value="55.0" type="double"/>
+		<param name="pointcloud_filter/theta_min" value="-7.0" type="double"/>
+		<param name="pointcloud_filter/phi_max" value="180.0" type="double"/>
+		<param name="pointcloud_filter/phi_min" value="-180.0" type="double"/>	
+	</node>
+</launch>

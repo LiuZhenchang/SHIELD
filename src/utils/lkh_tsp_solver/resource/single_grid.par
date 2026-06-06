@@ -1,0 +1,4 @@
+PROBLEM_FILE = /home/lfeng/SHIELD/src/utils/lkh_tsp_solver/resource/single_grid.tsp
+GAIN23 = NO
+OUTPUT_TOUR_FILE =/home/lfeng/SHIELD/src/utils/lkh_tsp_solver/resource/single_grid.txt
+RUNS = 1

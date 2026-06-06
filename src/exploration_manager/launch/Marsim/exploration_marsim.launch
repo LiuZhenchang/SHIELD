@@ -1,0 +1,21 @@
+<launch>
+	<!-- Debug info -->
+	<!-- <env name="ROSCONSOLE_CONFIG_FILE" value="$(find exploration_manager)/config/debug.config"/> -->
+	<arg name="demo_name" default="garage" />
+	<arg name="drone_id" default="1" />
+	<arg name="drone_num" default="1" />
+
+	<arg name="odom_topic" default="/quad_0/lidar_slam/odom" />
+	<arg name="cloud_topic" default="/quad0_pcl_render_node/cloud" />
+	<arg name="frame_id" default="world" />
+	
+	<!-- ************ UAV Exploration Node ************* -->
+	<include file="$(find exploration_manager)/launch/Marsim/single_drone_planner_$(arg demo_name).xml">
+		<arg name="drone_id" value="$(arg drone_id)" />
+		<arg name="drone_num" value="$(arg drone_num)" />
+		<arg name="odom_topic" value="$(arg odom_topic)" />
+		<arg name="cloud_topic" value="$(arg cloud_topic)" />
+		<arg name="frame_id" value="$(arg frame_id)" />
+	</include>
+	
+</launch>

@@ -1,0 +1,36 @@
+<launch>
+  <node name="map_test" pkg="plan_env" type="map_test">
+    <remap from="/multi_map_manager/chunk_data_recv" to="/multi_map_manager/chunk_data" />
+    <param name="sdf_map/resolution" value="0.1" />
+    <param name="sdf_map/map_size_x" value="22" />
+    <param name="sdf_map/map_size_y" value="22" />
+    <param name="sdf_map/map_size_z" value="3.5" />
+    <param name="sdf_map/obstacles_inflation" value="0.199" />
+    <param name="sdf_map/local_bound_inflate" value="0.5"/>
+    <param name="sdf_map/local_map_margin" value="50"/>
+    <param name="sdf_map/ground_height" value="-1.0"/>
+    <param name="sdf_map/default_dist" value="0.5"/>
+    <param name="sdf_map/p_hit" value="0.65"/>
+    <param name="sdf_map/p_miss" value="0.35"/>
+    <param name="sdf_map/p_min" value="0.12"/>
+    <param name="sdf_map/p_max" value="0.90"/>
+    <param name="sdf_map/p_occ" value="0.80"/>
+
+    <param name="sdf_map/max_ray_length" value="4.5"/>
+    <param name="sdf_map/virtual_ceil_height" value="-10"/>
+    <param name="sdf_map/optimistic" value="true" type="bool"/>
+    <param name="sdf_map/signed_dist" value="false" type="bool"/>
+
+    <param name="sdf_map/box_min_x" value="-7" type="double"/>
+    <param name="sdf_map/box_min_y" value="-15" type="double"/>
+    <param name="sdf_map/box_min_z" value="0" type="double"/>
+    <param name="sdf_map/box_max_x" value="7" type="double"/>
+    <param name="sdf_map/box_max_y" value="15" type="double"/>
+    <param name="sdf_map/box_max_z" value="1.7" type="double"/>
+    <param name="sdf_map/no_drone_1" value="false" type="bool"/>
+
+    <param name="exploration/drone_num" value="5" type="double"/>
+    <param name="exploration/drone_id" value="1" type="int"/>
+
+  </node>
+</launch>
