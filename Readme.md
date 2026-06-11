@@ -1,6 +1,6 @@
 # SHIELD
 
-SHIELD, **S**pherical-Projection **H**ybrid-Frontier **I**ntegration for **E**fficient **L**iDAR-based **D**rone Exploration. **SHIELD** is a LiDAR-based UAV exploration framework which uses an outward spherical-projection ray-casting strategy to ensure flight safety and exploration efficiency in open areas with insufficient point cloud returns. It maintains an observation-quality occupancy map and performs ray-casting based on quality. A hybrid frontier method is used to tackle both the computational burden and the inconsistent quality of point clouds.
+SHIELD, **S**pherical-Projection **H**ybrid-Frontier **I**ntegration for **E**fficient **L**i**D**AR-based UAV Exploration. **SHIELD** is a LiDAR-based UAV exploration framework which uses an outward spherical-projection ray-casting strategy to ensure flight safety and exploration efficiency in open areas with insufficient point cloud returns. It maintains an observation-quality occupancy map and performs ray-casting based on quality. A hybrid frontier method is used to tackle both the computational burden and the inconsistent quality of point clouds.
 
 
 
@@ -41,7 +41,7 @@ Please cite our paper if you use this project in your research:
 - [SHIELD](#shield)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
-  - [Exploring Different Environments](#exploring-different-environments)
+  - [Exploring Different Scenarios](#exploring-different-scenarios)
   - [Acknowledgements](#acknowledgements)
 
 ## Quick Start
