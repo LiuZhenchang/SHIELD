@@ -50,11 +50,11 @@ namespace shield
         bspline_pub_ = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
 
         // search_timer_ = nh.createTimer(ros::Duration(0.5), &FastExplorationFSM::searchFrontiersCallback, this);
-        // 关键修改：使用自定义队列的NodeHandle
+        // Key change: use a NodeHandle with a custom queue
         ros::NodeHandle nh_custom;
         nh_custom.setCallbackQueue(&custom_queue_);
         search_timer_ = nh_custom.createTimer(ros::Duration(fp_->search_frt_interval_), &FastExplorationFSM::searchFrontiersCallback, this);
-        // 启动线程处理自定义队列
+        // Start the thread that processes the custom queue
         thread_running_ = true;
         callback_thread_ = boost::thread(&FastExplorationFSM::threadFunc, this);
 
@@ -62,7 +62,7 @@ namespace shield
         nh_odom_custom.setCallbackQueue(&custom_odom_queue_);
         odom_sub_ = nh_odom_custom.subscribe("/odom_world", 1, &FastExplorationFSM::odometryCallback, this);
 
-        // 启动线程处理自定义队列
+        // Start the thread that processes the custom queue
         thread_odom_running_ = true;
         callback_odom_thread_ = boost::thread(&FastExplorationFSM::threadOdomFunc, this);
 
@@ -79,7 +79,7 @@ namespace shield
                 int res1 = expl_manager_->planExploreMotion(fd_->odom_pos_, fd_->odom_vel_, Vector3d(0, 0, 0), Vector3d(fd_->odom_yaw_, 0, 0));
                 visualizGlobalPath();
                 visualizeFrontier();
-                start_searchfrontiers_flag_ = true; // 标记可以开始searchfrontiers
+                start_searchfrontiers_flag_ = true; // mark that searchfrontiers can begin
                 // restart exploration if new frontier is found
                 if (res1 == 2 && state_ != EXPL_STATE::WAIT_TRIGGER)
                 {
@@ -95,13 +95,13 @@ namespace shield
                 expl_manager_->frontier_finder_->searchFrontiers(fd_->odom_pos_, fd_->odom_yaw_);
                 expl_manager_->frontier_finder_->computeFrontiersToVisit(fd_->odom_pos_);
                 expl_manager_->frontier_finder_->updateFrontierCostMatrix();
-                // cp更改：将frontier_finder找到的frt放入expl_manager_的ed_->averages_中
+                // cp change: put the frts found by frontier_finder into expl_manager_'s ed_->averages_
                 expl_manager_->frontier_finder_->getTopViewpointsInfo(fd_->odom_pos_, expl_manager_->ed_->views_, expl_manager_->ed_->yaws_, expl_manager_->ed_->averages_);
                 visualizeFrontier();
                 Eigen::Vector3d goal;
                 double yaw;
                 int res_cp = findGlobalTourOfGrid(goal, yaw);
-                start_searchfrontiers_flag_ = true; // 标记可以开始searchfrontiers
+                start_searchfrontiers_flag_ = true; // mark that searchfrontiers can begin
 
                 if ((res_cp == 0 || res_cp == 1) && state_ != EXPL_STATE::WAIT_TRIGGER)
                 {
@@ -127,7 +127,7 @@ namespace shield
     void FastExplorationFSM::threadFunc()
     {
         // printThreadId("threadFunc");
-        ros::Rate rate(500); // 高频率处理
+        ros::Rate rate(500); // high-frequency processing
         while (thread_running_ && ros::ok())
         {
             custom_queue_.callAvailable(ros::WallDuration(0.01));
@@ -138,7 +138,7 @@ namespace shield
     void FastExplorationFSM::threadOdomFunc()
     {
         // printThreadId("threadOdomFunc");
-        ros::Rate rate(500); // 高频率处理
+        ros::Rate rate(500); // high-frequency processing
         while (thread_odom_running_ && ros::ok())
         {
             custom_odom_queue_.callAvailable(ros::WallDuration(0.01));
@@ -164,7 +164,7 @@ namespace shield
             expl_manager_->frontier_finder_->searchFrontiers(fd_->odom_pos_, fd_->odom_yaw_);
             expl_manager_->frontier_finder_->computeFrontiersToVisit(fd_->odom_pos_);
             expl_manager_->frontier_finder_->updateFrontierCostMatrix();
-            // cp更改：将frontier_finder找到的frt放入expl_manager_的ed_->averages_中
+            // cp change: put the frts found by frontier_finder into expl_manager_'s ed_->averages_
             expl_manager_->frontier_finder_->getTopViewpointsInfo(fd_->odom_pos_, expl_manager_->ed_->views_, expl_manager_->ed_->yaws_, expl_manager_->ed_->averages_);
             if (!expl_manager_->frontier_finder_->haveTargetFrontier())
             {
@@ -269,7 +269,7 @@ namespace shield
         fd_->odom_pos_(1) = msg->pose.pose.position.y;
         fd_->odom_pos_(2) = msg->pose.pose.position.z;
 
-        expl_manager_->hgrid_->setDronePos(fd_->odom_pos_); // 设置无人机所处Hgrid位置
+        expl_manager_->hgrid_->setDronePos(fd_->odom_pos_); // set the Hgrid position the drone is located in
 
         fd_->odom_orient_.w() = msg->pose.pose.orientation.w;
         fd_->odom_orient_.x() = msg->pose.pose.orientation.x;
@@ -431,7 +431,7 @@ namespace shield
 
                 ROS_INFO_STREAM("\033[33m updateFrontierCostMatrix time" << elapsed << " \033[0m");
 
-                // cp更改：将frontier_finder找到的frt放入expl_manager_的ed_->averages_中
+                // cp change: put the frts found by frontier_finder into expl_manager_'s ed_->averages_
                 expl_manager_->frontier_finder_->getTopViewpointsInfo(fd_->odom_pos_, expl_manager_->ed_->views_, expl_manager_->ed_->yaws_, expl_manager_->ed_->averages_);
 
                 gettimeofday(&t5, NULL);
@@ -551,12 +551,12 @@ namespace shield
                 //         fabs(fd_->odom_yaw_ - expl_manager_->ed_->next_yaw_) > 0.1))
                 if (info->duration_ - t_cur < fp_->replan_time_)
                 {
-                    /*增加这段代码改为指点飞行*/
+                    /* add this block of code to switch to point-to-point flight */
                     // if((fd_->odom_pos_ - expl_manager_->ed_->next_pos_).norm() < 0.2){
                     //     transitState(FINISH, "FSM_EXEC_TRAJ");
                     //     break;
                     // }
-                    /*增加这段代码改为指点飞行*/
+                    /* add this block of code to switch to point-to-point flight */
                     // Replan if traj is almost fully executed
                     ROS_WARN("=================== Replan: explore traj fully executed ===================");
                     fd_->static_state_ = false;
@@ -595,7 +595,7 @@ namespace shield
                         << " from " + fd_->state_str_[pre_s] + " to " + fd_->state_str_[int(new_state)]);
     }
 
-    // cp更改：fsm中调用cp计算相关函数并可视化
+    // cp change: in the fsm, call the cp-related computation functions and visualize
     int FastExplorationFSM::findGlobalTourOfGrid(Vector3d &goal, double &yaw)
     {
 
@@ -604,22 +604,22 @@ namespace shield
         bool status = expl_manager_->findGlobalTourOfGrid(
             {fd_->odom_pos_}, {fd_->odom_vel_}, grid_id, true);
 
-        // 绘制hgrid网格
+        // draw the hgrid grid
         vector<int> ids, ids_free, ids_unknown;
         vector<Eigen::Vector3d> centers;
         vector<Eigen::Vector3d> centers_free;
         vector<Eigen::Vector3d> centers_unknown;
         Eigen::Vector3d grid_size = expl_manager_->hgrid_->getResolution();
 
-        expl_manager_->hgrid_->getCenterAll(centers, ids, 0);                 // 获取几何中心
-        expl_manager_->hgrid_->getCenterAll(centers_free, ids_free, 1);       // 获取free体素的加权中心
-        expl_manager_->hgrid_->getCenterAll(centers_unknown, ids_unknown, 2); // 获取unknown体素的加权中心
+        expl_manager_->hgrid_->getCenterAll(centers, ids, 0);                 // get the geometric center
+        expl_manager_->hgrid_->getCenterAll(centers_free, ids_free, 1);       // get the weighted center of free voxels
+        expl_manager_->hgrid_->getCenterAll(centers_unknown, ids_unknown, 2); // get the weighted center of unknown voxels
 
         visualization_->drawHgridBox(centers, grid_size);
         visualization_->displaySphereList(centers_free, marker_scale_, Eigen::Vector4d(0, 0, 1, 1), 2, 7);
         visualization_->displaySphereList(centers_unknown, marker_scale_, Eigen::Vector4d(1, 0, 1, 1), 3, 7);
 
-        // 判断odom处于哪个grid中
+        // determine which grid the odom is in
         // int id = expl_manager_->hgrid_->getGridIDofPos(fd_->odom_pos_);
         // visualization_->drawText(fd_->odom_pos_, std::to_string(id), 2, Eigen::Vector4d(0.5, 0.5, 0.5, 1), "text", 10086, 7);
 
@@ -679,7 +679,7 @@ namespace shield
         }
         if (!frt_id.empty())
         {
-            // 存在有效的frt_id，发布
+            // a valid frt_id exists, publish it
             expl_manager_->frontier_finder_->setTargetFrontier(frt_id[0]);
             goal = frontiers[frt_id[0]].viewpoints_[0].pos_;
             yaw = frontiers[frt_id[0]].viewpoints_[0].yaw_;

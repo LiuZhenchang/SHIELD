@@ -121,7 +121,7 @@ namespace shield
         par_file_grid << "OUTPUT_TOUR_FILE =" << ep_->tsp_dir_ << "/single_grid.txt\n";
         par_file_grid << "RUNS = 1\n";
 
-        //cp更改：以service形式调用tsp
+        //cp change: call tsp as a service
         tsp_client_ =
             nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp_" + to_string(ep_->drone_id_), true);
         
@@ -337,7 +337,7 @@ namespace shield
         path = short_tour;
     }
 
-    //cp更改：计算hgrid的路径
+    //cp change: compute the hgrid path
     bool FastExplorationManager::findGlobalTourOfGrid(
         const vector<Eigen::Vector3d> &positions,
         const vector<Eigen::Vector3d> &velocities,
@@ -360,7 +360,7 @@ namespace shield
         if (grid_ids.empty())
         {
             ROS_WARN("UAV %d explore Finished 1.", ep_->drone_id_);
-            // ed_->explore_finish_ = true; flt先注释掉，避免影响状态机
+            // ed_->explore_finish_ = true; flt commented out for now to avoid affecting the state machine
             return false;
 
         }
@@ -517,7 +517,7 @@ namespace shield
 
         return true;
     }
-    //cp更改：负责挑出来第一个hgrid里面的frontier，和下一个hgrid
+    //cp change: responsible for picking out the frontier inside the first hgrid, and the next hgrid
     void FastExplorationManager::findGridAndFrontierPath(const Vector3d &cur_pos,
                                                          const Vector3d &cur_vel, const double &cur_yaw, vector<int> &grid_ids,
                                                          vector<int> &frontier_ids)
@@ -551,7 +551,7 @@ namespace shield
         // Consider next grid in frontier tour planning
         Eigen::Vector3d grid_pos;
         vector<Eigen::Vector3d> grid_pos_vec;
-        // 写入对应grid_ids的unknown center到grid_pos_vec中
+        // write the unknown center of the corresponding grid_ids into grid_pos_vec
         for (int i = 0; i < grid_ids.size(); ++i)
         {
             grid_pos_vec.push_back(hgrid_->getCenter(grid_ids[i], 2));
@@ -559,7 +559,7 @@ namespace shield
 
 
         if(grid_pos_vec.size()>=2){
-            Eigen::Vector3d next_grid_pos = grid_pos_vec[1]; // 读取下一个grid的位置
+            Eigen::Vector3d next_grid_pos = grid_pos_vec[1]; // read the position of the next grid
             findTourOfFrontier(cur_pos, cur_vel, cur_yaw, frt_ids, {next_grid_pos}, frontier_ids);
         }
         else if(grid_pos_vec.size()==1){
@@ -579,7 +579,7 @@ namespace shield
 
 
     }
-    //cp更改：被findGridAndFrontierPath调用，对第一个hgrid里面的frontier，和下一个hgrid进行tsp计算
+    //cp change: called by findGridAndFrontierPath, performs the tsp computation over the frontier inside the first hgrid and the next hgrid
     void FastExplorationManager::findTourOfFrontier(const Vector3d &cur_pos, const Vector3d &cur_vel,
                                                     const double &cur_yaw, const vector<int> &ftr_ids, const vector<Eigen::Vector3d> &grid_pos,
                                                     vector<int> &indices)

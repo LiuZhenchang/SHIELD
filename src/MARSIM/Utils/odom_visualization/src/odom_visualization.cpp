@@ -548,14 +548,14 @@ int main(int argc, char **argv) {
     pub_sync_lidar = n.advertise<sensor_msgs::PointCloud2>(quad_name + "/sensor_cloud_sync", 1000);
 
     //message filter
-    message_filters::Subscriber<nav_msgs::Odometry> sub_quadstate_me(n, "odom", 1000); //本身
-    message_filters::Subscriber<nav_msgs::Odometry> sub_quadstate_other(n, sub_quadpose_topic, 1000); //队友
-    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pointcloud(n, sub_pointcloud_topic, 1000); //扫到的点云
+    message_filters::Subscriber<nav_msgs::Odometry> sub_quadstate_me(n, "odom", 1000); //itself
+    message_filters::Subscriber<nav_msgs::Odometry> sub_quadstate_other(n, sub_quadpose_topic, 1000); //teammate
+    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pointcloud(n, sub_pointcloud_topic, 1000); //scanned point cloud
     typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, nav_msgs::Odometry, sensor_msgs::PointCloud2> MySyncPolicy;
     message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(1000), sub_quadstate_me, sub_quadstate_other,
                                                      sub_pointcloud); //queue size=10
     sync.registerCallback(boost::bind(&Syncallback, _1, _2, _3));
-    //callback function如果时类成员函数，则需要先传入this指向当前对象
+    //if the callback function is a class member function, this needs to be passed in first to point to the current object
 //    sync.registerCallback(boost::bind(&Package_name::Syncallback, this, _1, _2, _3));
 
     posePub = n.advertise<geometry_msgs::PoseStamped>( "pose", 1000, true);

@@ -44,7 +44,7 @@ namespace shield
         };
 
         void initMap(ros::NodeHandle &nh);
-        // 随体系下点云，激光雷达到全局系的SE3矩阵
+        // Body-frame point cloud, and the SE3 matrix from lidar to global frame
         void inputPointCloud(const pcl::PointCloud<pcl::PointXYZ> &points, const Eigen::Vector3d &sensor_pos);
 
         void posToIndex(const Eigen::Vector3d &pos, Eigen::Vector3i &id);
@@ -86,17 +86,17 @@ namespace shield
 
         // flt added
         visualization_msgs::Marker createNormalMarker(const Eigen::Vector3d &position, const Eigen::Vector3d &normal, int marker_id);
-        ros::Publisher normal_marker_pub_; // 在类内声明发布器
-        int marker_id_ = 0;                // 用于生成唯一Marker ID
+        ros::Publisher normal_marker_pub_; // Publisher declared inside the class
+        int marker_id_ = 0;                // Used to generate unique Marker IDs
         double raycast_cos_threshold_;
         double raycast_cos_threshold2_;
         double raycast_dist_threshold_;
 
         shared_ptr<PerceptionUtils_Lidar> percep_utils_lidar_;
-        vector<pcl::PointCloud<pcl::PointXYZ>> pointcloud_buffer_; // 存储多帧点云的缓存区
-        int pointcloud_buffer_length_;                             // 缓存的点云帧数
+        vector<pcl::PointCloud<pcl::PointXYZ>> pointcloud_buffer_; // Buffer storing multiple point cloud frames
+        int pointcloud_buffer_length_;                             // Number of point cloud frames to cache
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_merge_; // 合并后的点云
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_merge_; // Merged point cloud
         int raycast_num_threshold_;
 
         bool isboundary(const Eigen::Vector3d &pos);
@@ -194,15 +194,15 @@ namespace shield
         // main map data, occupancy of each voxel and Euclidean distance
         std::vector<double> occupancy_buffer_;
         std::vector<char> occupancy_buffer_inflate_;
-        std::vector<double> min_observed_dist_;  // 观察距离
-        std::vector<double> max_observed_angle_; // 观察角度，记录cos值，0对应侧视，1对应正视
-        std::vector<double> quality_buffer_;     // 根据观察距离和角度计算的观测质量
+        std::vector<double> min_observed_dist_;  // Observation distance
+        std::vector<double> max_observed_angle_; // Observation angle, stores the cosine value; 0 corresponds to a grazing view, 1 to a frontal view
+        std::vector<double> quality_buffer_;     // Observation quality computed from observation distance and angle
         std::vector<double> distance_buffer_neg_;
         std::vector<double> distance_buffer_;
-        std::vector<int> point_num_; // voxel中落入的激光雷达点数
+        std::vector<int> point_num_; // Number of lidar points falling into the voxel
         std::vector<double> tmp_buffer1_;
         std::vector<double> tmp_buffer2_;
-        std::vector<Eigen::Vector3d> plane_normal_; // voxel的法向量
+        std::vector<Eigen::Vector3d> plane_normal_; // Voxel normal vector
         // data for updating
         vector<short> count_hit_, count_miss_, count_hit_and_miss_;
         vector<char> flag_rayend_, flag_visited_;

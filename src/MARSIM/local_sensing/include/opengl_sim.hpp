@@ -752,12 +752,12 @@ void opengl_pointcloud_render::preprocess(pcl::PointCloud< PointType > cloud_all
                   pcl::NormalEstimation<PointType,pcl::Normal> normalEstimation;
                   //preprocess pointcloud data, normal estimation
                   normalEstimation.setInputCloud(cloud_all_map.makeShared());
-                  //对于每一个点都用半径为3cm的近邻搜索方式
+                  //for each point, use a neighbor search with a radius of 3cm
                   normalEstimation.setRadiusSearch(3.0*downsample_res);
-                  //Kd_tree是一种数据结构便于管理点云以及搜索点云，法线估计对象会使用这种结构来找到哦啊最近邻点
+                  //Kd_tree is a data structure that facilitates managing and searching point clouds; the normal estimation object uses this structure to find the nearest neighbor points
                   pcl::search::KdTree<PointType>::Ptr kdtree(new pcl::search::KdTree<PointType>);
                   normalEstimation.setSearchMethod(kdtree);
-                  //计算法线
+                  //compute the normals
                   normalEstimation.compute(*all_normals);
 
                   int origin_mapptcount = cloud_all_map.points.size();

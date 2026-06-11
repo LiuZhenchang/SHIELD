@@ -72,7 +72,7 @@ namespace shield
                 ros::Subscriber odom_sub_;
                 ros::Publisher cloud_pub_;
 
-                // 同步回调随体系雷达点云和里程计
+                // Synchronized callback for body-frame lidar point cloud and odometry
                 shared_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub_sync_;
                 shared_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub_sync_;
 
@@ -85,14 +85,14 @@ namespace shield
 
                 SynchronizerOdomCloud odom_cloud_sync_;
 
-                ros::CallbackQueue custom_queue_; // 自定义回调队列
-                boost::thread callback_thread_;   // 处理队列的线程
-                bool thread_running_;             // 线程运行标志
+                ros::CallbackQueue custom_queue_; // Custom callback queue
+                boost::thread callback_thread_;   // Thread that processes the queue
+                bool thread_running_;             // Thread running flag
                 bool map_initialized_;
 
-                // 线程执行函数
+                // Thread execution function
                 void threadFunc();
-                // 打印线程id
+                // Print thread id
                 void printThreadId(const std::string &context);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_lidar_sensor_;
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_lidar_local_;
@@ -135,13 +135,13 @@ namespace shield
                 void cloudFilter(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_raw,
                                 pcl::PointCloud<pcl::PointXYZ> &cloud_filtered);
 
-                // 点云滤波条件
+                // Point cloud filtering conditions
                 pcl::ConditionAnd<pcl::PointXYZ>::Ptr condition_;
                 pcl::TfQuadraticXYZComparison<pcl::PointXYZ>::Ptr comp_min_;
                 pcl::TfQuadraticXYZComparison<pcl::PointXYZ>::Ptr comp_max_;
 
-                ros::CallbackQueue custom_map_queue_;  // 自定义回调队列
-                boost::thread callback_map_thread_;    // 处理队列的线程
+                ros::CallbackQueue custom_map_queue_;  // Custom callback queue
+                boost::thread callback_map_thread_;    // Thread that processes the queue
                 bool thread_map_running_;
 
                 void threadMapFunc();

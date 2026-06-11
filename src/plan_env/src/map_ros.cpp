@@ -35,7 +35,7 @@ namespace shield
     void MapROS::threadFunc()
     {
         // printThreadId("threadFunc");
-        ros::Rate rate(500); // 高频率处理
+        ros::Rate rate(500); // High-frequency processing
         while (thread_running_ && ros::ok())
         {
             custom_queue_.callAvailable(ros::WallDuration(0.01));
@@ -46,7 +46,7 @@ namespace shield
     void MapROS::threadMapFunc()
     {
         // printThreadId("threadOdomFunc");
-        ros::Rate rate(500); // 高频率处理
+        ros::Rate rate(500); // High-frequency processing
         while (thread_map_running_ && ros::ok())
         {
             custom_map_queue_.callAvailable(ros::WallDuration(0.01));
@@ -96,13 +96,13 @@ namespace shield
 
 
 
-        /***************************** 初始化点云滤波数据 ****************************/
-        // 1. 准备 AND 组合条件
+        /***************************** Initialize point cloud filtering data ****************************/
+        // 1. Prepare the AND combined condition
         condition_.reset(new pcl::ConditionAnd<pcl::PointXYZ>());
         Eigen::Matrix3f I = Eigen::Matrix3f::Identity();
         Eigen::Vector3f Zero = Eigen::Vector3f::Zero();
 
-        // 2. 距离下限：x^2+y^2+z^2 - min^2 >= 0
+        // 2. Distance lower bound: x^2+y^2+z^2 - min^2 >= 0
         comp_min_.reset(new pcl::TfQuadraticXYZComparison<pcl::PointXYZ>());
         comp_min_->setComparisonMatrix(I);                                   // A = I
         comp_min_->setComparisonVector(Zero);                                // v = 0
@@ -110,7 +110,7 @@ namespace shield
         comp_min_->setComparisonOperator(pcl::ComparisonOps::CompareOp::GE); // >= 0
         condition_->addComparison(comp_min_);
 
-        // 3. 距离上限：x^2+y^2+z^2 - max^2 <= 0
+        // 3. Distance upper bound: x^2+y^2+z^2 - max^2 <= 0
         comp_max_.reset(new pcl::TfQuadraticXYZComparison<pcl::PointXYZ>());
         comp_max_->setComparisonMatrix(I);                                   // A = I
         comp_max_->setComparisonVector(Zero);                                // v = 0
@@ -127,7 +127,7 @@ namespace shield
         odom_cloud_sync_.reset(new message_filters::Synchronizer<SyncPolicyOdomCloud>(SyncPolicyOdomCloud(20), *odom_sub_sync_, *cloud_sub_sync_));
         odom_cloud_sync_->registerCallback(boost::bind(&MapROS::odomCloudCallback, this, _1, _2));
 
-        // 启动线程处理自定义队列
+        // Start the thread that processes the custom queue
         thread_running_ = true;
         callback_thread_ = boost::thread(&MapROS::threadFunc, this);
 
@@ -286,7 +286,7 @@ namespace shield
 
         Eigen::Vector3i min_idx, max_idx;
         
-        //画出地图里所有的Voxel，不只是update box中的
+        //Draw all Voxels in the map, not only those in the update box
         min_idx = Eigen::Vector3i(0,0,0);
         max_idx = Eigen::Vector3i(map_->mp_->map_voxel_num_(0), map_->mp_->map_voxel_num_(1), map_->mp_->map_voxel_num_(2));
 
@@ -492,33 +492,33 @@ namespace shield
         {
             return;
         }
-        // 点云处理对象初始化
+        // Point cloud processing object initialization
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp(new pcl::PointCloud<pcl::PointXYZ>());
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_temp1(new pcl::PointCloud<pcl::PointXYZ>());
 
-        // 创建条件滤波器对象，最大最小ray范围滤波
+        // Create a conditional removal filter object, filtering by the min/max ray range
         pcl::ConditionalRemoval<pcl::PointXYZ> filter;
         filter.setInputCloud(cloud_raw);
         filter.setCondition(condition_);
-        filter.setKeepOrganized(false); // 丢弃索引，返回紧凑输出
+        filter.setKeepOrganized(false); // Discard indices and return a compact output
         filter.filter(*cloud_temp);
         if (cloud_temp->empty())
         {
             return;
         }
 
-        // 创建体素栅格（模板）滤波器对象，对点云进行降采样，点数据类型为 pcl::PointXYZ
+        // Create a voxel grid (templated) filter object to downsample the point cloud; the point data type is pcl::PointXYZ
         pcl::VoxelGrid<pcl::PointXYZ> vg;
         const float kLeafSize = leaf_size_;
         vg.setLeafSize(kLeafSize, kLeafSize, kLeafSize);
-        vg.setInputCloud(cloud_temp); // 设置输入点云，注意：此处传入的是点云类对象的智能指针
-        vg.filter(*cloud_temp1);      // 执行过滤，并带出处理后的点云数据，注意：此处传入的是点云类对象
+        vg.setInputCloud(cloud_temp); // Set the input point cloud; note: a smart pointer to the point cloud object is passed here
+        vg.filter(*cloud_temp1);      // Perform filtering and output the processed point cloud data; note: a point cloud object is passed here
         if (cloud_temp1->empty())
         {
             return;
         }
 
-        // 创建半径滤波器对象
+        // Create a radius outlier removal filter object
         pcl::RadiusOutlierRemoval<pcl::PointXYZ> radius_filter;
         radius_filter.setInputCloud(cloud_temp1);
         radius_filter.setRadiusSearch(1.0);

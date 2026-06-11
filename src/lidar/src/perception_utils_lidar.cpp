@@ -26,11 +26,11 @@ namespace shield
 
         nh.param("perception_utils_lidar/read_calibration", read_calibration_, false);
         nh.param("perception_utils_lidar/cfg_dir", calibration_dir_, string("null"));
-        nh.param("perception_utils_lidar/calibration_num_threshold", calibration_num_threshold_, 20); // 每个格子里落入多少点才认为这个方向回波有效
-        nh.param("perception_utils_lidar/pos_threshold", pos_threshold_, 0.5); // 每个格子里落入多少点才认为这个方向回波有效
+        nh.param("perception_utils_lidar/calibration_num_threshold", calibration_num_threshold_, 20); // Minimum number of points that must fall into a cell for the return in that direction to be considered valid
+        nh.param("perception_utils_lidar/pos_threshold", pos_threshold_, 0.5); // Minimum number of points that must fall into a cell for the return in that direction to be considered valid
 
 
-        // 此时还是度为单位
+        // Values are still in degrees at this point
         Hsize_ = (int)((phi_max_ - phi_min_) / d_phi_);
         Vsize_ = std::ceil((theta_max_ - theta_min_) / d_theta_);
 
@@ -46,12 +46,12 @@ namespace shield
         else
         {
             ROS_ERROR("not read calibration data");
-            // 此时还是度为单位
+            // Values are still in degrees at this point
             Hsize_ = (int)((phi_max_ - phi_min_) / d_phi_);
             Vsize_ = std::ceil((theta_max_ - theta_min_) / d_theta_);
         }
 
-        // 换算为弧度为单位
+        // Convert to radians
 
         mount_yaw_ *= M_PI / 180.0;
         mount_pitch_ *= M_PI / 180.0;
@@ -104,89 +104,89 @@ namespace shield
 
     void PerceptionUtils_Lidar::testinsideFOV()
     {
-        // --- 生成 40x40x40 立方体内的随机测试点 ---
-        const int num_points = 100;    // 随机点数量
-        const double cube_size = 70.0; // 立方体边长
+        // --- Generate random test points inside a 40x40x40 cube ---
+        const int num_points = 100;    // Number of random points
+        const double cube_size = 70.0; // Cube edge length
         const double half_size = cube_size / 2.0;
 
-        // 随机数生成器初始化
+        // Initialize the random number generator
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dis(-half_size, half_size);
         std::uniform_real_distribution<> dis1(-half_size / 3.0, half_size);
 
-        // 创建点标记
+        // Create the point marker
         visualization_msgs::Marker points_marker;
         points_marker.header.frame_id = frame_id_;
         points_marker.header.stamp = ros::Time::now();
         points_marker.ns = "fov_test_points";
         points_marker.id = 1;
         points_marker.type = visualization_msgs::Marker::POINTS;
-        points_marker.scale.x = 0.3; // 点大小
+        points_marker.scale.x = 0.3; // Point size
         points_marker.scale.y = 0.3;
-        points_marker.color.a = 1.0; // 透明度
+        points_marker.color.a = 1.0; // Opacity
 
-        // 生成随机点并检查是否在FOV内
+        // Generate random points and check whether they are inside the FOV
         for (int i = 0; i < num_points; ++i)
         {
-            // 生成相对于飞机位置的随机偏移（-20 ~ +20 米）
+            // Generate a random offset relative to the aircraft position (-20 ~ +20 meters)
             Eigen::Vector3d offset(dis(gen), dis(gen), dis1(gen));
             Eigen::Vector3d point_world = odom_pos_ + offset;
 
-            // 判断点是否在FOV内
+            // Determine whether the point is inside the FOV
             bool is_inside = insideFOV(point_world);
 
-            // 转换为Marker点
+            // Convert to a Marker point
             geometry_msgs::Point p;
             p.x = point_world.x();
             p.y = point_world.y();
             p.z = point_world.z();
             points_marker.points.push_back(p);
 
-            // 设置颜色（绿色=视野内，红色=视野外）
+            // Set the color (green = inside FOV, red = outside FOV)
             std_msgs::ColorRGBA color;
             color.a = 0.8;
             if (is_inside)
             {
-                points_marker.scale.x = 1.0; // 点大小
+                points_marker.scale.x = 1.0; // Point size
                 points_marker.scale.y = 1.0;
-                color.g = 1.0; // 绿色
+                color.g = 1.0; // Green
             }
             else
             {
-                color.r = 1.0; // 红色
+                color.r = 1.0; // Red
             }
             points_marker.colors.push_back(color);
         }
 
-        drawer2_.publish(points_marker); // 发布测试点
+        drawer2_.publish(points_marker); // Publish the test points
     }
 
     bool PerceptionUtils_Lidar::insideFOV(const Eigen::Vector3d &point_world)
     {
-        // 将世界坐标系中的点转换到雷达局部坐标系
+        // Transform the point from the world coordinate frame into the lidar local coordinate frame
         Eigen::Vector3d relative_pos = point_world - odom_pos_;
         Eigen::Vector3d body_frame = odom_orient_.inverse() * relative_pos;
         Eigen::Vector3d lidar_frame = SE3_matrix_lidar_.inverse() * body_frame;
 
-        // 计算半径
+        // Compute the radius
         double r = lidar_frame.norm();
         if (r < min_radius_ || r > max_radius_)
         {
             return false;
         }
 
-        // 计算方位角phi（经度）和极角theta（纬度）
-        double phi = atan2(lidar_frame.y(), lidar_frame.x()); // [-π, π]
-        double theta = asin(lidar_frame.z() / r);             // [-π/2, π/2]
+        // Compute the azimuth angle phi (longitude) and polar angle theta (latitude)
+        double phi = atan2(lidar_frame.y(), lidar_frame.x()); // [-pi, pi]
+        double theta = asin(lidar_frame.z() / r);             // [-pi/2, pi/2]
 
-        // 检查极角theta范围
+        // Check the polar angle theta range
         if (theta < theta_min_ || theta > theta_max_)
         {
             return false;
         }
 
-        // 检查方位角phi范围，处理phi范围跨越±π的情况
+        // Check the azimuth angle phi range, handling the case where the phi range crosses +/-pi
         if (phi_min_ <= phi_max_)
         {
             if (phi < phi_min_ || phi > phi_max_)
@@ -196,7 +196,7 @@ namespace shield
         }
         else
         {
-            // 当phi_min > phi_max时，检查phi是否在[phi_min, π]或[-π, phi_max]
+            // When phi_min > phi_max, check whether phi is in [phi_min, pi] or [-pi, phi_max]
             if (!(phi >= phi_min_ || phi <= phi_max_))
             {
                 return false;
@@ -206,7 +206,7 @@ namespace shield
         return true;
     }
 
-    // 激光雷达坐标系直角坐标转换为球面坐标
+    // Convert Cartesian coordinates in the lidar coordinate frame to spherical coordinates
     void PerceptionUtils_Lidar::posToSphere(const Eigen::Vector3d &point, double &r, double &phi, double &theta)
     {
         r = sqrt(pow(point.x(), 2) + pow(point.y(), 2) + pow(point.z(), 2));
@@ -228,7 +228,7 @@ namespace shield
             v = 0;
         }
 
-        // 计算经度索引
+        // Compute the longitude index
         int h = std::floor((phi - phi_min_) / d_phi_);
         if (phi >= phi_max_ - epsilon)
         {
@@ -249,7 +249,7 @@ namespace shield
         phi = h * d_phi_ + phi_min_ + 0.5 * d_phi_;
         r = distance_[id];
     }
-    // 返回某个格子落入的点的global坐标，r即为平均的distance
+    // Returns the global coordinates of the points that fall into a given cell; r is the average distance
     Eigen::Vector3d PerceptionUtils_Lidar::indexToGlobal(const int &id)
     {
         double theta, phi, r;
@@ -263,23 +263,23 @@ namespace shield
         return pos_global;
     }
 
-    //把某个激光雷达系下的点云投影到球面，并统计距离、落入球面格子数量
+    // Project a point cloud in a lidar coordinate frame onto the sphere, and accumulate distances and counts of points falling into the spherical cells
     void PerceptionUtils_Lidar::project_lidar_to_global(const double& x , const double& y , const double& z){
 
         double r, phi, theta;
 
         posToSphere(Eigen::Vector3d(x, y, z), r, phi, theta);
         int id = sphereToIndex(r, phi, theta);
-    
-        
-        distance_[id] = (distance_[id] * num_[id] + r)/(num_[id] + 1);//对distance取加权平均值
+
+
+        distance_[id] = (distance_[id] * num_[id] + r)/(num_[id] + 1);// Take the weighted average of distance
         num_[id] += 1;
 
 
-    
+
     }
 
-    // 把某个激光雷达系下的点云投影到球面，并统计距离、落入球面格子数量
+    // Project a point cloud in a lidar coordinate frame onto the sphere, and accumulate distances and counts of points falling into the spherical cells
     void PerceptionUtils_Lidar::updateProjection(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, double size)
     {
         resetProjection();
@@ -312,7 +312,7 @@ namespace shield
 
     void PerceptionUtils_Lidar::resetProjection()
     {
-        // 重置球面投影坐标为球面，并将distance设置为0，落入球面格子的num设置为0
+        // Reset the spherical projection coordinates to the sphere, set distance to 0, and set the count of points falling into the spherical cells to 0
         std::fill(num_.begin(), num_.end(), 0);
         std::fill(distance_.begin(), distance_.end(), 0.0);
     }
@@ -353,20 +353,20 @@ namespace shield
                 double dist = std::max(std::min(distance_[i], max_radius_), min_radius_);
                 double h = dist / max_radius_ * 360;
 
-                // 处理色相的边界：h=360等同于h=0，h<0时自动修正为正角度
+                // Handle hue boundaries: h=360 is equivalent to h=0, and h<0 is automatically corrected to a positive angle
                 h = fmod(h, 360.0);
                 if (h < 0)
                     h += 360.0;
 
-                // HSV转RGB的核心公式（基于行业标准算法）
-                double c = v * s;                                // 颜色浓度（Chroma）
-                double x = c * (1 - abs(fmod(h / 60.0, 2) - 1)); // 过渡色系数
-                double m = v - c;                                // 亮度补偿（确保明度正确）
+                // Core HSV-to-RGB formula (based on the standard industry algorithm)
+                double c = v * s;                                // Color saturation (Chroma)
+                double x = c * (1 - abs(fmod(h / 60.0, 2) - 1)); // Transition color coefficient
+                double m = v - c;                                // Brightness compensation (ensures correct value/lightness)
 
-                // 初始化RGB基础值（0~1范围）
+                // Initialize the base RGB values (0~1 range)
                 double r = 0.0, g = 0.0, b = 0.0;
 
-                // 根据色相所在的6个区间，分配c、x、0到RGB通道
+                // Assign c, x, 0 to the RGB channels based on which of the 6 hue intervals applies
                 if (h >= 0 && h < 60)
                 {
                     r = c;
@@ -415,7 +415,7 @@ namespace shield
         cloud1.header.frame_id = frame_id_;
         sensor_msgs::PointCloud2 cloud_msg;
         pcl::toROSMsg(cloud1, cloud_msg);
-        // 3. 发布完整的 MarkerArray
+        // 3. Publish the complete MarkerArray
         drawer1_.publish(cloud_msg);
     }
 
@@ -425,7 +425,7 @@ namespace shield
         // Clean old marker_
         marker_.action = visualization_msgs::Marker::DELETE;
         drawer_.publish(marker_);
-        // 清空之前的点
+        // Clear the previous points
         marker_.points.clear();
 
         marker_.header.frame_id = frame_id_;
@@ -435,7 +435,7 @@ namespace shield
         marker_.type = visualization_msgs::Marker::LINE_LIST;
         marker_.action = visualization_msgs::Marker::ADD;
 
-        // 这里不能设置，会导致画出来的发生奇怪的偏移
+        // This must not be set here, as it would cause a strange offset in the drawn output
         // marker_.pose.position.x = odom_pos_.x() + lidar_trans_.x();
         // marker_.pose.position.y = odom_pos_.y() + lidar_trans_.y();
         // marker_.pose.position.z = odom_pos_.z() + lidar_trans_.z();
@@ -445,7 +445,7 @@ namespace shield
         // marker_.pose.orientation.w = odom_orient.w();
 
 
-        // 样式设置
+        // Style settings
         marker_.scale.x = 0.05;
         marker_.scale.y = 1.0;
         marker_.scale.z = 1.0;
@@ -455,32 +455,32 @@ namespace shield
         marker_.color.a = 0.5;
 
 
-        // 生成网格点
+        // Generate the grid points
         for (int i_theta = 0; i_theta < Vsize_ + 1; ++i_theta)
-        { // 维度方向分段数（纬度）
+        { // Number of segments in the latitude direction
             double theta = theta_min_ + i_theta * d_theta_;
 
-            // 纬线（固定theta，沿phi方向）
+            // Latitude lines (fixed theta, sweeping along phi)
             for (int i_phi = 0; i_phi < Hsize_ + 1; ++i_phi)
-            { // 方位角方向分段数（经度）
+            { // Number of segments in the azimuth direction (longitude)
                 double phi = phi_min_ + i_phi * d_phi_;
 
-                // 当前点（局部坐标系）
+                // Current point (local coordinate frame)
                 Eigen::Vector3d p_local;
                 p_local.x() = max_radius_ * cos(theta) * cos(phi);
                 p_local.y() = max_radius_ * cos(theta) * sin(phi);
                 p_local.z() = max_radius_ * sin(theta);
 
-                // 将局部坐标系的点转换到世界坐标系
+                // Transform the point from the local coordinate frame to the world coordinate frame
                 Eigen::Vector3d p_world = SE3_Matrix_odom_ * SE3_matrix_lidar_ * p_local;
 
-                // 转换为 geometry_msgs::Point
+                // Convert to geometry_msgs::Point
                 geometry_msgs::Point p;
                 p.x = p_world.x();
                 p.y = p_world.y();
                 p.z = p_world.z();
 
-                // 连接到下一个phi点（经线）
+                // Connect to the next phi point (longitude line)
                 if (i_phi < Hsize_)
                 {
                     double next_phi = phi + d_phi_;
@@ -500,7 +500,7 @@ namespace shield
                     marker_.points.push_back(p_next_phi);
                 }
 
-                // 连接到下一个theta点（纬线）
+                // Connect to the next theta point (latitude line)
                 if (i_theta < Vsize_)
                 {
                     double next_theta = theta + d_theta_;
@@ -561,7 +561,7 @@ namespace shield
                     int num = getNumber(nv * Hsize_ + nh);
                     if (num > 0)
                     {
-                        return false; // 如果邻居有num>0.说明这个点大概率不是真正的free空间，返回false
+                        return false; // If a neighbor has num>0, this point is most likely not truly free space, so return false
                     }
                     else
                     {
@@ -580,7 +580,7 @@ namespace shield
         ROS_INFO("calibration_dir_: %s", calibration_dir_.c_str());
         if (!calibration_file.is_open())
         {
-            // 错误处理：文件无法打开
+            // Error handling: the file cannot be opened
             std::cerr << "Error: Unable to open calibration file at "
                       << calibration_dir_ << "/calibration.txt" << std::endl;
             return;
@@ -609,7 +609,7 @@ namespace shield
         ROS_INFO("calibration_dir_: %s", calibration_dir_.c_str());
         if (!calibration_file1.is_open())
         {
-            // 错误处理：文件无法打开
+            // Error handling: the file cannot be opened
             std::cerr << "Error: Unable to open calibration file at "
                       << calibration_dir_ << "/calibration.txt" << std::endl;
             return;
@@ -643,7 +643,7 @@ namespace shield
             int id = sphereToIndex(r, phi, theta);
 
 
-            num_intensity[id] += cloud.points[i].intensity / 256.0; // 归一化到0-1之间
+            num_intensity[id] += cloud.points[i].intensity / 256.0; // Normalize to the range 0-1
             num[id] += 1;
 
 
@@ -688,7 +688,7 @@ namespace shield
         std::ifstream file(calibration_dir_ + "/calibration.txt");
         if (!file.is_open())
         {
-            // 文件打开失败，可以抛出异常或设置错误标志
+            // Failed to open the file; can throw an exception or set an error flag
             Hsize_ = (int)(phi_max_ - phi_min_) / d_phi_;
             Vsize_ = std::ceil((theta_max_ - theta_min_) / d_theta_);
             ROS_ERROR("Error: Unable to open calibration file at %s/calibration.txt", calibration_dir_.c_str());
@@ -696,36 +696,36 @@ namespace shield
         }
 
         std::string line;
-        // 读取第一行 (Hsize)
+        // Read the first line (Hsize)
         if (std::getline(file, line))
         {
             std::istringstream iss(line);
             std::string dummy;
             if (!(iss >> dummy >> dummy >> Hsize_))
-            { // 跳过 "Hsize" 和 "="
-                // 解析错误处理
+            { // Skip "Hsize" and "="
+                // Parse error handling
                 return;
             }
         }
 
-        // 读取第二行 (Vsize)
+        // Read the second line (Vsize)
         if (std::getline(file, line))
         {
             std::istringstream iss(line);
             std::string dummy;
             if (!(iss >> dummy >> dummy >> Vsize_))
-            { // 跳过 "Vsize" 和 "="
-                // 解析错误处理
+            { // Skip "Vsize" and "="
+                // Parse error handling
                 return;
             }
         }
 
-        // 读取剩余行 (检测器ID)
+        // Read the remaining lines (detector IDs)
         int id;
         while (std::getline(file, line))
         {
             if (line.empty())
-                continue; // 跳过空行
+                continue; // Skip empty lines
             std::istringstream iss(line);
             if (iss >> id)
             {
@@ -738,7 +738,7 @@ namespace shield
             ROS_WARN("deactive id = %d", deactive_id_[i]);
         }
 
-        // 将 vector 转换为 unordered_set
+        // Convert the vector to an unordered_set
         deactive_set_ = std::unordered_set<int>(deactive_id_.begin(), deactive_id_.end());
     }
 

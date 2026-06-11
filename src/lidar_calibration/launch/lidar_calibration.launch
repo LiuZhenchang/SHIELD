@@ -3,12 +3,12 @@
 
         <remap from="/cloud_origin" to="/livox/lidar" />
 
-        <!-- 使用相对路径，会自动添加到节点私有命名空间 -->
+        <!-- using a relative path, it is automatically added to the node's private namespace -->
         <param name="perception_utils_lidar/read_calibration" value="false" type="bool"/>
         <param name="perception_utils_lidar/cfg_dir" value="$(find lidar)/cfg" type="string"/>
         <param name="perception_utils_lidar/calibration_num_threshold" value= "33" type="int"/>
         <param name="lidar_calibration/calibration_num" value= "300" type="int"/>
         <param name="perception_utils_lidar/frame_id" value= "map" type="string"/>
-        <param name="perception_utils_lidar/pos_threshold" value= "0.1" type="double"/><!-- 度为单位，每个格子落点平均中心距离格子中心的角度阈值 -->
+        <param name="perception_utils_lidar/pos_threshold" value= "0.1" type="double"/><!-- in degrees, the angle threshold of the average distance from each cell's landing-point center to the cell center -->
     </node>
 </launch>

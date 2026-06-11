@@ -97,7 +97,7 @@ namespace shield
         int findGlobalTourOfGrid(Vector3d &goal, double &yaw);
 
 
-        void visualize();//可视化frontier
+        void visualize();//visualize frontier
         void visualizeOdom();
         void visualizGlobalPath();
         void visualizeLocalTraj();
@@ -126,24 +126,24 @@ namespace shield
         ros::Publisher replan_pub_, new_pub_, bspline_pub_;
         std_msgs::Int16 replan_msg_; //LZC Added
         
-        ros::CallbackQueue custom_queue_;  // 自定义回调队列
-        boost::thread callback_thread_;    // 处理队列的线程
-        bool thread_running_;              // 线程运行标志
+        ros::CallbackQueue custom_queue_;  // custom callback queue
+        boost::thread callback_thread_;    // thread that processes the queue
+        bool thread_running_;              // thread running flag
 
-        ros::CallbackQueue custom_odom_queue_;  // 自定义回调队列
-        boost::thread callback_odom_thread_;    // 处理队列的线程
+        ros::CallbackQueue custom_odom_queue_;  // custom callback queue
+        boost::thread callback_odom_thread_;    // thread that processes the queue
         bool thread_odom_running_;
 
-        // 线程执行函数
+        // thread execution function
         void threadFunc();
 
         void threadOdomFunc();
 
-        //打印线程id
+        //print thread id
         void printThreadId(const std::string& context);
         void searchFrontiersCallback(const ros::TimerEvent &e);
         bool start_searchfrontiers_flag_ = false;
-        std::mutex searchfrontiers_mutex_; // 标准C++互斥锁，保护frontier搜索操作
+        std::mutex searchfrontiers_mutex_; // standard C++ mutex, protects frontier search operations
 
         // Swarm state
         // ros::Publisher drone_state_pub_;
@@ -173,7 +173,7 @@ namespace shield
         // vector<Vector3d> tsp_tour;
 
         std::string frame_id_;
-        double marker_scale_; // 可视化marker的缩放比例
+        double marker_scale_; // scale factor for visualization markers
 
     };
 }

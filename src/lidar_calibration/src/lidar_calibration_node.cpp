@@ -4,7 +4,7 @@
 using namespace shield;
 
 int count = 0;
-int calibration_num; //校准的帧数
+int calibration_num; //number of calibration frames
 shared_ptr<PerceptionUtils_Lidar> percep_utils_lidar_;
 
 // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_norm_(new pcl::PointCloud<pcl::PointXYZI>());
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "lidar_calibration_node");
     ros::NodeHandle nh("~");
 
-    nh.param("lidar_calibration/calibration_num", calibration_num, 600);//校准的帧数
+    nh.param("lidar_calibration/calibration_num", calibration_num, 600);//number of calibration frames
 
     // percep_utils_lidar_.reset(new PerceptionUtils_Lidar(nh));
 
@@ -69,7 +69,7 @@ void scanCallback(const sensor_msgs::PointCloud2::ConstPtr &scan){
     }
     else if(count > calibration_num)
     {
-        //默认没有姿态
+        //no pose by default
         Eigen::Vector3d odom_pos;
         Eigen::Quaterniond odom_orient;
         odom_pos << 0, 0, 0;

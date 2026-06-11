@@ -97,7 +97,7 @@ struct Frontier {
     void deactiveTargetFrontier(Eigen::Vector3d pos, double yaw);
     bool haveTargetFrontier();
 
-    void testmap();//测试拿到的地图数据是否正确
+    void testmap();// Test whether the retrieved map data is correct
 
     ros::Publisher frontier_pub_;
 
@@ -144,8 +144,8 @@ struct Frontier {
     void drawDebugInfo(const vector<Eigen::Vector3d>& pts, int pub_id);
 
 
-    bool insert_frontier = false; // 标记是否有frontier被插入
-    bool deactive_target_frontier_ = false; //强制删除目标frontier
+    bool insert_frontier = false; // Flag indicating whether any frontier has been inserted
+    bool deactive_target_frontier_ = false; // Force deletion of the target frontier
 
 
     // Data
@@ -174,11 +174,11 @@ struct Frontier {
     double cluster_size_xy_, cluster_size_z_;
     double candidate_rmax_, candidate_rmin_, candidate_dphi_;
     double min_candidate_dist_, min_candidate_clearance_;
-    double candidate_hmax_, candidate_hmin_; //柱坐标高方向撒点
+    double candidate_hmax_, candidate_hmin_; // Sample points along the height direction in cylindrical coordinates
     double min_view_finish_fraction_;
     double resolution_;
     
-    double min_visib_percent_; // 最小可见性百分比
+    double min_visib_percent_; // Minimum visibility percentage
     double division_ratio_;
     double frt_cluster_radius_;
 

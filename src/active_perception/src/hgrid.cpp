@@ -44,8 +44,8 @@ namespace shield
         grid_->updateGridData(grid_ids);
 
         for(auto id =0; id < getHGridNum(); id++){
-            //cp更改：在这里deactivate满足条件的hgrid
-            //如果未知区域占比小于0.1，就 deactivate
+            //cp change: deactivate hgrids that meet the condition here
+            //if the unknown region proportion is less than 0.1, deactivate it
             double unknown_percent = get_unknown_percent(id);
             int frontier_num = getFrontierNum(id);
             int frontier_qua_num = getQualityFrontierNum(id);
@@ -247,7 +247,7 @@ namespace shield
         else{
             if (dist1 < grid_->resolution_.norm())
             {
-                if(edt_->sdf_map_->getOccupancy(grid.center_free_) == SDFMap::FREE){//center是free，才进行路径搜索
+                if(edt_->sdf_map_->getOccupancy(grid.center_free_) == SDFMap::FREE){//only perform path search if center is free
                     path_finder_->reset();
                     if (path_finder_->search(pos, grid.center_free_) == Astar::REACH_END)
                     {
@@ -284,7 +284,7 @@ namespace shield
     //     double dist_cost = 0.0;
 
     //     double dist = (grid1.center_ - grid2.center_).norm();
-    //     if(edt_->sdf_map_->getOccupancy(grid1.center_free_) == SDFMap::FREE && edt_->sdf_map_->getOccupancy(grid2.center_free_) == SDFMap::FREE){//两个center都是free，才进行路径搜索
+    //     if(edt_->sdf_map_->getOccupancy(grid1.center_free_) == SDFMap::FREE && edt_->sdf_map_->getOccupancy(grid2.center_free_) == SDFMap::FREE){//only perform path search if both centers are free
 
     //         if (dist < grid_->resolution_.norm())
     //         {
@@ -319,7 +319,7 @@ namespace shield
     //     // return dist_cost;
     // }
 
-    //直接使用未知区域中心的距离作为成本
+    //Directly use the distance between unknown region centers as the cost
     double HGrid::getCostGridToGrid(const int &id1, const int &id2)
     {
         auto &grid1 = getGrid(id1);
@@ -429,7 +429,7 @@ namespace shield
         }
     }
 
-    // 读取grid_id中第一个里面包含的frt编号
+    // Read the frt ids contained in the first of grid_id
     void HGrid::getFrontiersInGrid(const vector<int> &grid_ids, vector<int> &frt_ids)
     {
         frt_ids.clear();
@@ -473,7 +473,7 @@ namespace shield
         return status;
     }
 
-    //根据position返回grid id
+    //Return grid id based on position
     int HGrid::getGridIDofPos(const Eigen::Vector3d &pos){
         Eigen::Vector3i id;
         grid_->posToIndex(pos, id);

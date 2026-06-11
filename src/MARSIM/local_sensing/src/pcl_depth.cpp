@@ -1,19 +1,19 @@
 #include <iostream>
 #include <boost/thread/thread.hpp>
 #include <pcl/common/common_headers.h>
-#include <pcl/range_image/range_image.h> //关于深度图像的头文件
+#include <pcl/range_image/range_image.h> //header file for range images
 #include <pcl/io/pcd_io.h>
-#include <pcl/visualization/range_image_visualizer.h> //深度图可视化的头文件
-#include <pcl/visualization/pcl_visualizer.h>         //PCL可视化的头文件
+#include <pcl/visualization/range_image_visualizer.h> //header file for range image visualization
+#include <pcl/visualization/pcl_visualizer.h>         //header file for PCL visualization
 #include <pcl/console/parse.h>
 
 typedef pcl::PointXYZ PointType;
-// 参数
-float angular_resolution_x = 0.2f, // angular_resolution为模拟的深度传感器的角度分辨率，即深度图像中一个像素对应的角度大小
+// parameters
+float angular_resolution_x = 0.2f, // angular_resolution is the angular resolution of the simulated depth sensor, i.e. the angle that one pixel in the range image corresponds to
     angular_resolution_y = angular_resolution_x;
-pcl::RangeImage::CoordinateFrame coordinate_frame = pcl::RangeImage::CAMERA_FRAME; // 深度图像遵循坐标系统
+pcl::RangeImage::CoordinateFrame coordinate_frame = pcl::RangeImage::CAMERA_FRAME; // coordinate system that the range image follows
 bool live_update = false;
-// 命令帮助提示
+// command help message
 void printUsage(const char *progName)
 {
   std::cout << "\n\nUsage: " << progName << " [options] <scene.pcd>\n\n"
@@ -37,10 +37,10 @@ void setViewerPose(pcl::visualization::PCLVisualizer &viewer, const Eigen::Affin
                            up_vector[0], up_vector[1], up_vector[2]);
 }
 
-// 主函数
+// main function
 int main(int argc, char **argv)
 {
-  // 输入命令分析
+  // parse input commands
   if (pcl::console::find_argument(argc, argv, "-h") >= 0)
   {
     printUsage(argv[0]);
@@ -64,10 +64,10 @@ int main(int argc, char **argv)
   angular_resolution_x = pcl::deg2rad(angular_resolution_x);
   angular_resolution_y = pcl::deg2rad(angular_resolution_y);
 
-  // 读取点云PCD文件  如果没有输入PCD文件就生成一个点云
+  // read point cloud PCD file; if no PCD file is provided, generate a point cloud
   pcl::PointCloud<PointType>::Ptr point_cloud_ptr(new pcl::PointCloud<PointType>);
   pcl::PointCloud<PointType> &point_cloud = *point_cloud_ptr;
-  Eigen::Affine3f scene_sensor_pose(Eigen::Affine3f::Identity()); // 申明传感器的位置是一个4*4的仿射变换
+  Eigen::Affine3f scene_sensor_pose(Eigen::Affine3f::Identity()); // declare the sensor pose as a 4x4 affine transformation
   std::vector<int> pcd_filename_indices = pcl::console::parse_file_extension_argument(argc, argv, "pcd");
   if (!pcd_filename_indices.empty())
   {
@@ -78,14 +78,14 @@ int main(int argc, char **argv)
       printUsage(argv[0]);
       return 0;
     }
-    // 给传感器的位姿赋值  就是获取点云的传感器的的平移与旋转的向量
+    // assign values to the sensor pose, i.e. obtain the translation and rotation vectors of the point cloud's sensor
     scene_sensor_pose = Eigen::Affine3f(Eigen::Translation3f(point_cloud.sensor_origin_[0],
                                                              point_cloud.sensor_origin_[1],
                                                              point_cloud.sensor_origin_[2])) *
                         Eigen::Affine3f(point_cloud.sensor_orientation_);
   }
   else
-  { // 如果没有给点云，则我们要自己生成点云
+  { // if no point cloud is provided, we generate one ourselves
     std::cout << "\nNo *.pcd file given => Genarating example point cloud.\n\n";
     for (float x = -0.5f; x <= 0.5f; x += 0.01f)
     {
@@ -102,29 +102,29 @@ int main(int argc, char **argv)
     point_cloud.height = 1;
   }
 
-  // -----从创建的点云中获取深度图--//
-  // 设置基本参数
+  // -----obtain the range image from the created point cloud--//
+  // set basic parameters
   float noise_level = 0.0;
   float min_range = 0.0f;
   int border_size = 1;
   boost::shared_ptr<pcl::RangeImage> range_image_ptr(new pcl::RangeImage);
   pcl::RangeImage &range_image = *range_image_ptr;
   /*
-   关于range_image.createFromPointCloud（）参数的解释 （涉及的角度都为弧度为单位） ：
-     point_cloud为创建深度图像所需要的点云
-    angular_resolution_x深度传感器X方向的角度分辨率
-    angular_resolution_y深度传感器Y方向的角度分辨率
-     pcl::deg2rad (360.0f)深度传感器的水平最大采样角度
-     pcl::deg2rad (180.0f)垂直最大采样角度
-     scene_sensor_pose设置的模拟传感器的位姿是一个仿射变换矩阵，默认为4*4的单位矩阵变换
-     coordinate_frame定义按照那种坐标系统的习惯  默认为CAMERA_FRAME
-     noise_level  获取深度图像深度时，邻近点对查询点距离值的影响水平
-     min_range 设置最小的获取距离，小于最小的获取距离的位置为传感器的盲区
-     border_size  设置获取深度图像边缘的宽度 默认为0
+   Explanation of the parameters of range_image.createFromPointCloud() (all angles involved are in radians):
+     point_cloud is the point cloud needed to create the range image
+    angular_resolution_x is the angular resolution of the depth sensor in the X direction
+    angular_resolution_y is the angular resolution of the depth sensor in the Y direction
+     pcl::deg2rad (360.0f) is the maximum horizontal sampling angle of the depth sensor
+     pcl::deg2rad (180.0f) is the maximum vertical sampling angle
+     scene_sensor_pose is the pose of the simulated sensor, an affine transformation matrix, defaulting to a 4x4 identity transformation
+     coordinate_frame defines which coordinate system convention to follow; defaults to CAMERA_FRAME
+     noise_level is the influence level of neighboring points on the query point's distance value when obtaining the range image depth
+     min_range sets the minimum acquisition distance; positions closer than this are the sensor's blind zone
+     border_size sets the width of the border of the obtained range image; defaults to 0
   */
   range_image.createFromPointCloud(point_cloud, angular_resolution_x, angular_resolution_y, pcl::deg2rad(77.0f), pcl::deg2rad(77.0f), scene_sensor_pose, coordinate_frame, noise_level, min_range, border_size);
 
-  // 可视化点云
+  // visualize the point cloud
   pcl::visualization::PCLVisualizer viewer("3D Viewer");
   viewer.setBackgroundColor(1, 1, 1);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointWithRange> range_image_color_handler(range_image_ptr, 0, 0, 0);
@@ -134,10 +134,10 @@ int main(int argc, char **argv)
   // PointCloudColorHandlerCustom<PointType> point_cloud_color_handler (point_cloud_ptr, 150, 150, 150);
   // viewer.addPointCloud (point_cloud_ptr, point_cloud_color_handler, "original point cloud");
   viewer.initCameraParameters();
-  // range_image.getTransformationToWorldSystem ()的作用是获取从深度图像坐标系统（应该就是传感器的坐标）转换为世界坐标系统的转换矩阵
-  setViewerPose(viewer, range_image.getTransformationToWorldSystem()); // 设置视点的位置
+  // range_image.getTransformationToWorldSystem() obtains the transformation matrix from the range image coordinate system (which should be the sensor coordinate system) to the world coordinate system
+  setViewerPose(viewer, range_image.getTransformationToWorldSystem()); // set the viewpoint position
 
-  // 可视化深度图
+  // visualize the range image
   pcl::visualization::RangeImageVisualizer range_image_widget("Range image");
   range_image_widget.showRangeImage(range_image);
 
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
     if (live_update)
     {
-      // 如果选择的是——l的参数说明就是要根据自己选择的视点来创建深度图。
+      // if the -l parameter is selected, it means the range image should be created according to the viewpoint chosen by the user.
       // live update - update the range image according to the selected view in the 3D viewer.
       scene_sensor_pose = viewer.getViewerPose();
       range_image.createFromPointCloud(point_cloud, angular_resolution_x, angular_resolution_y,

@@ -154,7 +154,7 @@ namespace shield
     return grid_data_[id].type_;
   }
   
-  //注意，这个会改变grid_ids
+  //Note, this will modify grid_ids
   void UniformGrid::updateGridData(vector<int> &grid_ids)
   {
     for (auto &grid : grid_data_)
@@ -379,7 +379,7 @@ namespace shield
         continue;
       auto &grid = grid_data_[toAddress(id)];
       grid.contained_frontier_ids_[i] = 1;
-      grid.frontier_num_ += 1;//统计grid里面frt的数量
+      grid.frontier_num_ += 1;//count the number of frts in the grid
     }
   }
 
@@ -403,7 +403,7 @@ namespace shield
       }
       auto &grid = grid_data_[toAddress(id)];
       grid.contained_frontier_ids_[i] = 1;
-      grid.frontier_num_ += 1;//统计grid里面frt的数量
+      grid.frontier_num_ += 1;//count the number of frts in the grid
       //enum FrontierTYPE { FREEUNKNOWNFTR = 0, QUALITYFTR =1};
       if(frts[i].type_ == 1){
         grid.frontier_quality_num_ += 1;

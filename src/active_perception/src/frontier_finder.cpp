@@ -83,27 +83,27 @@ namespace shield
     update_max += Eigen::Vector3d(2.0 * resolution, 2.0 * resolution, 2.0 * resolution);
 
     // Removed changed frontiers in updated map
-    auto resetFlag = [&](list<Frontier>::iterator &iter, list<Frontier> &frontiers, bool force_eliminate = false) { //&代表引用传递，iter和frontiers是形参，iter和frontiers的改变会影响实参
+    auto resetFlag = [&](list<Frontier>::iterator &iter, list<Frontier> &frontiers, bool force_eliminate = false) { //& denotes pass-by-reference; iter and frontiers are formal parameters, and changes to iter and frontiers will affect the actual arguments
       Eigen::Vector3i idx;
       for (auto cell : iter->cells_)
-      { // 把frontiers里面的cell做循环，然后用posToIndex转换为idx，然后把frontier_flag_里面的值改为0
+      { // Loop over the cells in frontiers, convert them to idx using posToIndex, then set the value in frontier_flag_ to 0
         edt_env_->sdf_map_->posToIndex(cell, idx);
-        // 记录地图中所有体素是否为边界，如果是边界为1，不是为0或-1，容器尺寸与体素数量相等
+        // Record whether each voxel in the map is a frontier: 1 if it is a frontier, 0 or -1 if not; the container size equals the number of voxels
         if (!force_eliminate)
-          frontier_flag_[toadr(idx)] = 0; // 动态边界，允许重复生成
+          frontier_flag_[toadr(idx)] = 0; // Dynamic frontier, allows regeneration
         else
         {
           if (iter->type_ == QUALITYFTR)
-          {                                  // 如果是质量边界，标记为-1
-            frontier_flag_[toadr(idx)] = -1; // 静态边界，不允许重复生成
+          {                                  // If it is a quality frontier, mark it as -1
+            frontier_flag_[toadr(idx)] = -1; // Static frontier, regeneration not allowed
           }
           else
-          {                                  // 如果是free和unknown边界，标记为-2
-            frontier_flag_[toadr(idx)] = -2; // 静态边界，不允许重复生成
+          {                                  // If it is a free and unknown frontier, mark it as -2
+            frontier_flag_[toadr(idx)] = -2; // Static frontier, regeneration not allowed
           }
         }
       }
-      iter = frontiers.erase(iter); // 存储所有边界信息（Frontier）的容器
+      iter = frontiers.erase(iter); // Container storing all frontier information (Frontier)
     };
 
 
@@ -127,14 +127,14 @@ namespace shield
 
         removed_ids_.push_back(rmv_idx);
       }
-      // 这里添加，如果是目标frt且需要消除，就消除
+      // Add here: if it is the target frt and needs to be eliminated, then eliminate it
       else if (iter->is_target_ == true && deactive_target_frontier_ == true)
       {
         resetFlag(iter, frontiers_, deactive_target_frontier_);
         removed_ids_.push_back(rmv_idx);
         deactive_target_frontier_ = false;
       }
-      // 累计到达3次，直接强制消除
+      // Accumulated 3 arrivals, force elimination directly
       else if ((cur_pos - iter->viewpoints_[0].pos_).norm() < 0.5 && fabs(iter->viewpoints_[0].yaw_ - cur_yaw) < 0.3)
       {
         reach_count_++;
@@ -189,13 +189,13 @@ namespace shield
           if (!edt_env_->sdf_map_->isInMap(cur))
             continue;
 
-          // 质量边界
+          // Quality frontier
           if ((frontier_flag_[toadr(cur)] == 0 || frontier_flag_[toadr(cur)] == -2) &&
               (edt_env_->sdf_map_->getOccupancy(cur) == edt_env_->sdf_map_->OCCUPIED) && ((edt_env_->sdf_map_->getObservedAngle(toadr(cur)) < threshold_max_)))
           {
             expandFrontier(cur);
           }
-          // free和unknown边界
+          // free and unknown frontier
           else if ((frontier_flag_[toadr(cur)] == 0 || frontier_flag_[toadr(cur)] == -1) && knownfree(cur) && (isNeighborUnknown(cur) && isNeighborWellObserved(cur)))
           {
             expandFrontier(cur);
@@ -211,25 +211,25 @@ namespace shield
 
   void FrontierFinder::computeFrontiersToVisit(Eigen::Vector3d cur_pos)
   {
-    int new_num = 0;         // 新增有效frontier数量
+    int new_num = 0;         // Number of newly added valid frontiers
     first_new_frt_ = -1;
     first_new_ftr_ = frontiers_.end();
     // Try find viewpoints for each cluster and categorize them according to
     // viewpoint number
     for (auto &tmp_ftr : tmp_frontiers_)
-    { // 遍历所有临时发现的frontiers
+    { // Iterate over all temporarily discovered frontiers
       // Search viewpoints around frontier
       sampleViewpoints(tmp_ftr);
       if (!tmp_ftr.viewpoints_.empty())
-      {            // 如果存在有效视点
-        ++new_num; // 增加有效frontier计数
+      {            // If valid viewpoints exist
+        ++new_num; // Increment the count of valid frontiers
 
         list<Frontier>::iterator inserted =
-            frontiers_.insert(frontiers_.end(), tmp_ftr); // 将当前frontier插入到有效列表末尾，并获取插入位置的迭代器
+            frontiers_.insert(frontiers_.end(), tmp_ftr); // Insert the current frontier at the end of the valid list and get the iterator to the insertion position
         // Sort the viewpoints by coverage fraction, best view in front
         if (tmp_ftr.type_ == QUALITYFTR)
         {
-          // 定义视点排序规则（按综合评分降序排列）
+          // Define the viewpoint sorting rule (sorted in descending order by overall score)
           auto compare = [=](const Viewpoint &v1, const Viewpoint &v2)
           {
             double score_v1 = v1.quality_;
@@ -252,7 +252,7 @@ namespace shield
           // }
 
           // if(quality_check){
-          //   // 对视点进行排序（最佳视点排在最前）
+          //   // Sort the viewpoints (best viewpoint placed first)
           //   sort(inserted->viewpoints_.begin(), inserted->viewpoints_.end(), compare);
           // }
           // else{
@@ -262,7 +262,7 @@ namespace shield
         }
         else if (tmp_ftr.type_ == FREEUNKNOWNFTR)
         {
-          // 定义视点排序规则（按综合评分降序排列）
+          // Define the viewpoint sorting rule (sorted in descending order by overall score)
           auto compare_vis_num = [=](const Viewpoint &v1, const Viewpoint &v2)
           {
             double score_v1 = v1.visib_num_;
@@ -273,7 +273,7 @@ namespace shield
           sort(inserted->viewpoints_.begin(), inserted->viewpoints_.end(), compare_vis_num);
         }
 
-        // 如果是首个有效frontier，记录其在列表中的位置
+        // If it is the first valid frontier, record its position in the list
         if (!insert_frontier && !frontiers_.size() > 0)
         {
           first_new_frt_ = frontiers_.size() - 1;
@@ -290,7 +290,7 @@ namespace shield
         //           << tmp_ftr.viewpoints_.begin()->pos_.z() << ". "<< std::endl;
       }
       else
-      { // 如果没有有效视点的情况，将该frontier的所有单元格标记为非活跃状态
+      { // If there are no valid viewpoints, mark all cells of this frontier as inactive
         for (auto cell : tmp_ftr.cells_)
         {
           Eigen::Vector3i idx_;
@@ -329,10 +329,10 @@ namespace shield
       // return;
     }
 
-    edt_env_->sdf_map_->indexToPos(first, pos); // first是输入的第一个符合frontier要求的voxel的id，这里转换为pos
-    expanded.push_back(pos);                    // 将一个新的元素加到vector的最后面，位置为当前最后一个元素的下一个元素
-    cell_queue.push(first);                     // 将x 接到队列的末端
-    frontier_flag_[toadr(first)] = 1;           // 标记为1，记录已为frontier
+    edt_env_->sdf_map_->indexToPos(first, pos); // first is the id of the first input voxel meeting the frontier requirement; here it is converted to pos
+    expanded.push_back(pos);                    // Append a new element to the end of the vector, at the position right after the current last element
+    cell_queue.push(first);                     // Append x to the end of the queue
+    frontier_flag_[toadr(first)] = 1;           // Mark as 1, recording that it has become a frontier
 
     int adr_first = edt_env_->sdf_map_->toAddress(first);
     Eigen::Vector3d normal_first = edt_env_->sdf_map_->getPlaneNormal(adr_first);
@@ -343,7 +343,7 @@ namespace shield
       int adr1 = edt_env_->sdf_map_->toAddress(nbr);
       Eigen::Vector3d normal = edt_env_->sdf_map_->getPlaneNormal(adr1);
       if (normal.dot(normal_first) > 0.8)
-      { // 近似处在一个平面上才划分为一个frontier
+      { // Only classify as the same frontier if approximately on the same plane
         expanded.push_back(pos);
         cell_queue.push(nbr);
         frontier_flag_[adr] = 1;
@@ -375,15 +375,15 @@ namespace shield
           int adr = toadr(nbr);
           Eigen::Vector3d pos1;
           edt_env_->sdf_map_->indexToPos(nbr, pos1);
-          // 0是没成为边界，1是成为边界，-1是成为过质量frt，-2是成为过free unknown边界
-          // 0和-2可以，其余不可以
+          // 0 means it never became a frontier, 1 means it became a frontier, -1 means it was once a quality frt, -2 means it was once a free unknown frontier
+          // 0 and -2 are allowed, the rest are not
           if ((frontier_flag_[adr] != 0 && frontier_flag_[adr] != -2) || !knownoccupy(nbr) || !edt_env_->sdf_map_->isInMap(nbr) || pos1[2] < ignore_height_ || pos1[2] > ignore_height_up_)
-          { // frontier free中同时和 occupy和unknown交界
+          { // frontier free that borders both occupy and unknown at the same time
             continue;
           }
-          // if((knownfree(nbr) && (isNeighborOccupy(nbr)) && (isNeighborUnknown(nbr)))){//frontier free中同时和 occupy和unknown交界
+          // if((knownfree(nbr) && (isNeighborOccupy(nbr)) && (isNeighborUnknown(nbr)))){//frontier free that borders both occupy and unknown at the same time
           if ((edt_env_->sdf_map_->getOccupancy(nbr) == edt_env_->sdf_map_->OCCUPIED) && (edt_env_->sdf_map_->getObservedAngle(toadr(nbr)) < threshold_max_))
-          { // 观测质量差的frontier
+          { // frontier with poor observation quality
             addCell2(adr, nbr, pos);
           }
         }
@@ -404,14 +404,14 @@ namespace shield
           int adr = toadr(nbr);
           Eigen::Vector3d pos1;
           edt_env_->sdf_map_->indexToPos(nbr, pos1);
-          // 0是没成为边界，1是成为边界，-1是成为过质量frt，-2是成为过free unknown边界
-          // 0和-1可以，其余不可以
+          // 0 means it never became a frontier, 1 means it became a frontier, -1 means it was once a quality frt, -2 means it was once a free unknown frontier
+          // 0 and -1 are allowed, the rest are not
           if ((frontier_flag_[adr] != 0 && frontier_flag_[adr] != -1) || !knownfree(nbr) || !edt_env_->sdf_map_->isInMap(nbr) || pos1[2] < ignore_height_ || pos1[2] > ignore_height_up_)
-          { // frontier free中同时和 occupy和unknown交界
+          { // frontier free that borders both occupy and unknown at the same time
             continue;
           }
           if (knownfree(nbr) && (isNeighborUnknown(nbr) && isNeighborWellObserved(nbr)))
-          { // free unknown交界
+          { // free unknown boundary
             addCell2(adr, nbr, pos);
           }
         }
@@ -1004,7 +1004,7 @@ namespace shield
               frontier.average_ + rc * Vector3d(cos(phi), sin(phi), 0) + Vector3d(0, 0, h);
 
           // Qualified viewpoint is in bounding box and in safe region
-          if (!edt_env_->sdf_map_->isInBox(sample_pos) || // not in box 或 inflation或 不free 则退出
+          if (!edt_env_->sdf_map_->isInBox(sample_pos) || // exit if not in box, or in inflation, or not free
               edt_env_->sdf_map_->getInflateOccupancy(sample_pos) == 1 ||
               edt_env_->sdf_map_->getOccupancy(sample_pos) != SDFMap::FREE)
           {
@@ -1027,7 +1027,7 @@ namespace shield
           avg_yaw = avg_yaw / cells.size() + atan2(ref_dir[1], ref_dir[0]);
           wrapYaw(avg_yaw);
 
-          Eigen::Vector3i idx; // 用于raycast编号
+          Eigen::Vector3i idx; // Used for raycast numbering
           double quality_av = 0;
           int visib_num = 0;
           int visib_num1 = 0;
@@ -1108,7 +1108,7 @@ namespace shield
       raycaster_->input(cell, pos);
       if (ftr_type == QUALITYFTR)
       {
-        // 针对质量差的frontier，要先raycast一格，不然会直接判定为occupy而不满足
+        // For frontiers with poor quality, raycast one cell first, otherwise it will be directly judged as occupy and not satisfy the condition
         raycaster_->nextId(idx);
       }
 
@@ -1294,7 +1294,7 @@ namespace shield
       {
         // << ", ";
         Viewpoint vj = ftr.viewpoints_.front();
-        vector<Vector3d> path; // 第一行mat的奇怪数值就是这里计算出来的
+        vector<Vector3d> path; // The strange values in the first row of mat are computed here
         mat(0, j++) =
             computeCost(cur_pos, vj.pos_, cur_yaw[0], vj.yaw_, cur_vel, cur_yaw[1], path);
       }
@@ -1377,11 +1377,11 @@ namespace shield
     }
     if (safe)
     {
-      path = {p1, p2}; // 问题可能在这里，不安全返回的值
+      path = {p1, p2}; // The problem might be here: the value returned when unsafe
       return (p1 - p2).norm();
     }
     // Search a path using decreasing resolution
-    vector<double> res = {1.0}; // 这个数应该改大，res为0.5，要比这个还大
+    vector<double> res = {1.0}; // This number should be made larger; res is 0.5, should be even larger than this
     for (int k = 0; k < res.size(); ++k)
     {
       astar_->reset();
@@ -1443,7 +1443,7 @@ namespace shield
     }
     return false;
   }
-  // cp更改：计算cp的costmatrix
+  // cp change: compute the costmatrix of cp
   void FrontierFinder::getSwarmCostMatrix(const vector<Vector3d> &positions, const vector<Vector3d> &velocities, const vector<double> yaws, Eigen::MatrixXd &mat)
   {
 
@@ -1513,7 +1513,7 @@ namespace shield
     }
 
   }
-  // cp更改：计算cp的costmatrix，加入考虑hgrid的代价项
+  // cp change: compute the costmatrix of cp, adding a cost term that considers hgrid
   void FrontierFinder::getSwarmCostMatrix(const vector<Vector3d> &positions,
                                           const vector<Vector3d> &velocities, const vector<double> &yaws, const vector<int> &ftr_ids,
                                           const vector<Eigen::Vector3d> &grid_pos, Eigen::MatrixXd &mat)

@@ -56,7 +56,7 @@ namespace shield
     bool neighborNumber(const int &id);
     void resetProjection();
 
-    // 返回激光雷达安装的SE3矩阵
+    // Returns the SE3 matrix of the lidar mounting
     Eigen::Isometry3d getSE3MatrixL2B();
 
     string calibration_dir_;
@@ -69,7 +69,7 @@ namespace shield
     bool IsIdDeactivated(int id);
 
     std::vector<int> deactive_id_;
-    std::unordered_set<int> deactive_set_; // 用于存储deactive_id_中的id，用于判断是否在deactive_id_中
+    std::unordered_set<int> deactive_set_; // Stores the ids from deactive_id_, used to check whether an id is in deactive_id_
 
   private:
     /* Params */
@@ -78,16 +78,16 @@ namespace shield
     // Mounting angles of camera or lidar
     double mount_yaw_, mount_pitch_, mount_roll_;
 
-    double theta_min_; // 纬度最小值（弧度）
-    double theta_max_; // 纬度最大值（默认上半球）
-    double phi_min_;   // 经度最小值（弧度）
-    double phi_max_;   // 经度最大值（默认完整圆周）
+    double theta_min_; // Minimum latitude (radians)
+    double theta_max_; // Maximum latitude (defaults to upper hemisphere)
+    double phi_min_;   // Minimum longitude (radians)
+    double phi_max_;   // Maximum longitude (defaults to a full circle)
 
-    // 球面步长
+    // Spherical step size
     double d_theta_;
     double d_phi_;
 
-    int search_radius_; // 球面格子搜索半径
+    int search_radius_; // Search radius in spherical grid cells
 
     ros::Publisher drawer_;
     ros::Publisher drawer1_;
@@ -107,20 +107,20 @@ namespace shield
 
     std::vector<double> distance_;
     std::vector<int> num_;
-    std::vector<Eigen::Vector3d> pos_lidar_; // lidar坐标系下每个格子的位置
+    std::vector<Eigen::Vector3d> pos_lidar_; // Position of each grid cell in the lidar coordinate frame
 
-    const double epsilon = 1e-10; // 浮点精度容差
+    const double epsilon = 1e-10; // Floating-point precision tolerance
 
     Eigen::Vector3d lidar_trans_;
 
-    // 雷达安装的SE3矩阵
+    // SE3 matrix of the lidar mounting
     Eigen::Isometry3d SE3_matrix_lidar_;
-    // 飞机里程计的SE3矩阵
+    // SE3 matrix of the aircraft odometry
     Eigen::Isometry3d SE3_Matrix_odom_;
 
     std::string frame_id_;
 
-    bool read_calibration_; // 是否校准lidar
+    bool read_calibration_; // Whether to calibrate the lidar
     int calibration_num_threshold_;
     double pos_threshold_;
   };

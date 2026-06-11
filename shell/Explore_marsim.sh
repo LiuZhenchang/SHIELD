@@ -1,4 +1,4 @@
-DEMO_NAME="community" # 可选值：garage、cave、community、ruins
+DEMO_NAME="community" # options: garage, cave, community, ruins
 
 case "$DEMO_NAME" in
     garage|cave)

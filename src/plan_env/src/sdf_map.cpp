@@ -153,7 +153,7 @@ namespace shield
             mp_->normals_.push_back(dir);
         }
 
-        // flt added 显示法向量
+        // flt added: visualize the normal vectors
         normal_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/sdf_map/voxel_normals", 10);
 
         percep_utils_lidar_ = std::make_shared<PerceptionUtils_Lidar>(nh);
@@ -504,7 +504,7 @@ namespace shield
             {
                 if (getOccupancy(idx) == OCCUPIED)
                 {
-                    Eigen::Vector3d normal = getPlaneNormal(toAddress(idx)); // 获取穿过点的法向量
+                    Eigen::Vector3d normal = getPlaneNormal(toAddress(idx)); // Get the normal vector at the point being passed through
                     Eigen::Vector3d ray_dir = (sensor_pos - pt_w).normalized();
                     Eigen::Vector3d cur_pos;
                     indexToPos(idx, cur_pos);
@@ -520,7 +520,7 @@ namespace shield
                         if (md_->point_num_[toAddress(idx)] < raycast_num_threshold_ &&
                             fabs(ray_dir.dot(normal)) > raycast_cos_threshold2_ &&
                             !well_observed && ray_well_observed)
-                        { // 如果历史点云不够多，且观测角度还可以，消除
+                        { // If there are not enough historical points and the observation angle is acceptable, clear it
                             setCacheOccupancy(toAddress(idx), 0);
                         }
                         break;
@@ -580,7 +580,7 @@ namespace shield
             posToIndex(pt_pos, idx);
             if (pt_pos[2] < 0.2 || !isInMap(pt_pos) || getOccupancy(idx) == OCCUPIED)
             {
-                // 如果穿回来发现是占用的，就不更新，防止后凿洞出来
+                // If it is occupied after being projected back, do not update it, to prevent carving holes later
                 tmp_flag = -1;
             }
             else
@@ -617,12 +617,12 @@ namespace shield
         for (int i = 0; i < maxid; i++)
         {
             if (percep_utils_lidar_->IsIdDeactivated(i))
-            { // 如果校准时候就没有回波，这个方向不要做raycast
+            { // If there was no echo during calibration, do not raycast in this direction
                 continue;
             }
             int num = percep_utils_lidar_->getNumber(i);
             if (num <= 0 && percep_utils_lidar_->neighborNumber(i))
-            { // 没有点投影到球面，从最开始即为free一直raycast
+            { // No point projected onto the sphere; raycast as free from the very beginning
                 pt_w = percep_utils_lidar_->getGlobalPos(i);
                 // Find closest point in map and set free
                 if (!isInMap(pt_w))
@@ -631,11 +631,11 @@ namespace shield
                 }
 
                 // Eigen::Vector3d ray_dir = pt_w - sensor_pos;
-                caster_->input(sensor_pos, pt_w); // 放入raycast
+                caster_->input(sensor_pos, pt_w); // Feed into raycast
                 flag = true;
                 idx_list.clear();
                 while (caster_->nextId(idx))
-                { // 从最开始即为free一直raycast
+                { // Raycast as free from the very beginning
                     if (!isInMap(idx))
                     {
                         continue;
@@ -644,9 +644,9 @@ namespace shield
                     idx_list.push_back(idx);
                     if (getOccupancy(idx) == OCCUPIED)
                     {
-                        // 向外raycast可以消除occupy
-                        //  Eigen::Vector3d normal = getPlaneNormal(toAddress(idx));//获取穿过点的法向量
-                        //  if(md_->point_num_[toAddress(idx)] < raycast_num_threshold_ && fabs(ray_dir.dot(normal)) > raycast_cos_threshold2_){//如果历史点云不够多，且观测角度还可以，消除
+                        // Raycasting outward can clear occupancy
+                        //  Eigen::Vector3d normal = getPlaneNormal(toAddress(idx));// Get the normal vector at the point being passed through
+                        //  if(md_->point_num_[toAddress(idx)] < raycast_num_threshold_ && fabs(ray_dir.dot(normal)) > raycast_cos_threshold2_){// If there are not enough historical points and the observation angle is acceptable, clear it
                         //      setCacheOccupancy(vox_adr, 0);
                         //  }
                         //  else{
@@ -677,7 +677,7 @@ namespace shield
         Eigen::Vector3d plane_normal;
         Eigen::Vector3i idx;
         posToIndex(pt_pos, idx);
-        pcl::Normal normal; // pcl库计算的法向量
+        pcl::Normal normal; // Normal vector computed by the PCL library
         pcl::PointXYZ searchPoint;
         searchPoint.x = pt_pos.x();
         searchPoint.y = pt_pos.y();
@@ -713,21 +713,21 @@ namespace shield
 
     void SDFMap::updatePointNumInVoxels(const pcl::PointCloud<pcl::PointXYZ> &points)
     {
-        pointcloud_buffer_.push_back(points); // 存入点云到buffer
+        pointcloud_buffer_.push_back(points); // Store the point cloud into the buffer
         if (pointcloud_buffer_.size() > pointcloud_buffer_length_)
         {
             pointcloud_buffer_.erase(pointcloud_buffer_.begin());
         }
-        cloud_merge_.reset(new pcl::PointCloud<pcl::PointXYZ>()); // 融合后点云的指针
-        for (int i = 0; i < pointcloud_buffer_.size(); i++)       // 融合点云
+        cloud_merge_.reset(new pcl::PointCloud<pcl::PointXYZ>()); // Pointer to the merged point cloud
+        for (int i = 0; i < pointcloud_buffer_.size(); i++)       // Merge the point clouds
         {
             *cloud_merge_ += pointcloud_buffer_[i];
         }
 
-        std::fill(md_->point_num_.begin(), md_->point_num_.end(), 0); // 先清空Voxel里面的点云数量统计
+        std::fill(md_->point_num_.begin(), md_->point_num_.end(), 0); // First clear the point count statistics inside each Voxel
 
         for (auto point : *cloud_merge_)
-        { // 统计点云落到Voxel里面的数量
+        { // Count the number of points falling into each Voxel
             Eigen::Vector3d pt_w(point.x, point.y, point.z);
             if (!isInMap(pt_w))
             {
@@ -755,7 +755,7 @@ namespace shield
         {
             return;
         }
-        // 创建基于邻域的法向估计类对象, 基于omp并行加速，需配置开启OpenMP
+        // Create a neighborhood-based normal estimation object, accelerated in parallel via OpenMP; OpenMP must be enabled
         pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
         ne.setNumberOfThreads(6);
         ne.setInputCloud(cloud);
@@ -801,38 +801,38 @@ namespace shield
         int marker_id)
     {
         visualization_msgs::Marker marker;
-        marker.header.frame_id = frame_id_; // 坐标系与地图一致
+        marker.header.frame_id = frame_id_; // Coordinate frame consistent with the map
         marker.header.stamp = ros::Time::now();
-        marker.ns = "voxel_normals"; // 命名空间
-        marker.id = marker_id;       // 唯一ID
+        marker.ns = "voxel_normals"; // Namespace
+        marker.id = marker_id;       // Unique ID
         marker.type = visualization_msgs::Marker::ARROW;
         marker.action = visualization_msgs::Marker::ADD;
-        marker.pose.orientation.w = 1.0; // 无旋转
+        marker.pose.orientation.w = 1.0; // No rotation
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
 
-        // 箭头起点（体素中心）和终点（沿法向量方向）
+        // Arrow start point (voxel center) and end point (along the normal direction)
         geometry_msgs::Point start, end;
         start.x = position.x();
         start.y = position.y();
         start.z = position.z();
-        end.x = position.x() + normal.x() * 2.0; // 缩放法向量长度
+        end.x = position.x() + normal.x() * 2.0; // Scale the normal vector length
         end.y = position.y() + normal.y() * 2.0;
         end.z = position.z() + normal.z() * 2.0;
 
         marker.points.push_back(start);
         marker.points.push_back(end);
 
-        // 箭头样式设置
-        marker.scale.x = 0.1; // 箭头杆直径
-        marker.scale.y = 0.2; // 箭头头直径
-        marker.scale.z = 0.5; // 箭头头长度
-        marker.color.r = 1.0; // 红色箭头
+        // Arrow style settings
+        marker.scale.x = 0.1; // Arrow shaft diameter
+        marker.scale.y = 0.2; // Arrow head diameter
+        marker.scale.z = 0.5; // Arrow head length
+        marker.color.r = 1.0; // Red arrow
         marker.color.g = 0.0;
         marker.color.b = 0.0;
-        marker.color.a = 1.0;               // 不透明度
-        marker.lifetime = ros::Duration(5); // 存活时间0.5秒
+        marker.color.a = 1.0;               // Opacity
+        marker.lifetime = ros::Duration(5); // Lifetime
 
         return marker;
     }

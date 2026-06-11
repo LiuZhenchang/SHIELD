@@ -278,84 +278,84 @@ int main(int argc, char **argv)
   }
 
   // trans to mesh
-  //  对点云重采样
+  //  resample the point cloud
   //  pcl::PointCloud<PointT>::Ptr cloud_filtered(new pcl::PointCloud<PointT>);
   //  cloud_filtered = cloud.makeShared();
-  //  pcl::search::KdTree<PointT>::Ptr treeSampling (new pcl::search::KdTree<PointT>);// 创建用于最近邻搜索的KD-Tree
-  //  pcl::PointCloud<PointT> mls_point;    //输出MLS
-  //  pcl::MovingLeastSquares<PointT,PointT> mls; // 定义最小二乘实现的对象mls
-  //  mls.setComputeNormals(false);  //设置在最小二乘计算中是否需要存储计算的法线
-  //  mls.setInputCloud(cloud_filtered);         //设置待处理点云
-  //  mls.setPolynomialOrder(2);            // 拟合2阶多项式拟合
-  //  mls.setPolynomialFit(false);     // 设置为false可以 加速 smooth
-  //  mls.setSearchMethod(treeSampling);         // 设置KD-Tree作为搜索方法
-  //  mls.setSearchRadius(0.05);           // 单位m.设置用于拟合的K近邻半径
-  //  mls.process(mls_point);                 //输出
+  //  pcl::search::KdTree<PointT>::Ptr treeSampling (new pcl::search::KdTree<PointT>);// create a KD-Tree for nearest neighbor search
+  //  pcl::PointCloud<PointT> mls_point;    //output MLS
+  //  pcl::MovingLeastSquares<PointT,PointT> mls; // define the moving least squares object mls
+  //  mls.setComputeNormals(false);  //set whether the computed normals need to be stored during the least squares computation
+  //  mls.setInputCloud(cloud_filtered);         //set the point cloud to be processed
+  //  mls.setPolynomialOrder(2);            // fit with a 2nd order polynomial
+  //  mls.setPolynomialFit(false);     // set to false to speed up smoothing
+  //  mls.setSearchMethod(treeSampling);         // set KD-Tree as the search method
+  //  mls.setSearchRadius(0.05);           // unit m. set the K nearest neighbor radius used for fitting
+  //  mls.process(mls_point);                 //output
 
-  //   // 输出重采样结果
+  //   // output the resampling result
   //   pcl::PointCloud<PointT>::Ptr cloud_smoothed(new pcl::PointCloud<PointT>);
   //   // cloud_smoothed = mls_point.makeShared();
   //   cloud_smoothed = cloud.makeShared();
   //   std::cout<<"cloud_smoothed: "<<cloud_smoothed->size() <<std::endl;
   //   //save cloud_smoothed
-  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/作业15-点云平滑及法线估计及显示/data/cloud_smoothed.pcd",*cloud_smoothed);
+  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/Assignment15-point cloud smoothing, normal estimation and display/data/cloud_smoothed.pcd",*cloud_smoothed);
 
-  //   pcl::VoxelGrid<PointT> downSampled;  //创建滤波对象
-  //   downSampled.setInputCloud (cloud_smoothed);            //设置需要过滤的点云给滤波对象
-  //   downSampled.setLeafSize (0.01f, 0.01f, 0.01f);  //设置滤波时创建的体素体积为1cm的立方体
-  //   downSampled.filter (*cloud_smoothed);           //执行滤波处理，存储输出
+  //   pcl::VoxelGrid<PointT> downSampled;  //create the filter object
+  //   downSampled.setInputCloud (cloud_smoothed);            //set the point cloud to be filtered for the filter object
+  //   downSampled.setLeafSize (0.01f, 0.01f, 0.01f);  //set the voxel volume created during filtering to a 1cm cube
+  //   downSampled.filter (*cloud_smoothed);           //perform the filtering and store the output
 
-  //   // 法线估计
-  //   pcl::NormalEstimation<PointT,pcl::Normal> normalEstimation;             //创建法线估计的对象
-  //   normalEstimation.setInputCloud(cloud_smoothed);                         //输入点云
-  //   pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);// 创建用于最近邻搜索的KD-Tree
+  //   // normal estimation
+  //   pcl::NormalEstimation<PointT,pcl::Normal> normalEstimation;             //create the normal estimation object
+  //   normalEstimation.setInputCloud(cloud_smoothed);                         //input point cloud
+  //   pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);// create a KD-Tree for nearest neighbor search
   //   normalEstimation.setSearchMethod(tree);
-  //   pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>); // 定义输出的点云法线
-  //   // K近邻确定方法，使用k个最近点，或者确定一个以r为半径的圆内的点集来确定都可以，两者选1即可
-  //   normalEstimation.setKSearch(20);// 使用当前点周围最近的10个点
-  //   //normalEstimation.setRadiusSearch(0.03);            //对于每一个点都用半径为3cm的近邻搜索方式
-  //   normalEstimation.compute(*normals);               //计算法线
-  //   // 输出法线
+  //   pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>); // define the output point cloud normals
+  //   // K nearest neighbor determination method: you can use the k nearest points, or determine the set of points within a circle of radius r; either one works, choose one of the two
+  //   normalEstimation.setKSearch(20);// use the nearest 10 points around the current point
+  //   //normalEstimation.setRadiusSearch(0.03);            //for each point, use a neighbor search with a radius of 3cm
+  //   normalEstimation.compute(*normals);               //compute the normals
+  //   // output the normals
   //   std::cout<<"normals: "<<normals->size()<<", "<<"normals fields: "<<pcl::getFieldsList(*normals)<<std::endl;
-  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/作业15-点云平滑及法线估计及显示/data/normals.pcd",*normals);
+  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/Assignment15-point cloud smoothing, normal estimation and display/data/normals.pcd",*normals);
 
-  // 	// 将点云位姿、颜色、法线信息连接到一起
+  // 	// concatenate the point cloud pose, color and normal information together
   //   pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
   //   pcl::concatenateFields(*cloud_smoothed, *normals, *cloud_with_normals);
-  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/作业15-点云平滑及法线估计及显示/data/cloud_with_normals.pcd",*cloud_with_normals);
+  //   // pcl::io::savePCDFileASCII("/home/xiaohu/learn_SLAM/zuoye15/Assignment15-point cloud smoothing, normal estimation and display/data/cloud_with_normals.pcd",*cloud_with_normals);
 
-  // // 贪心投影三角化
-  //   //定义搜索树对象
+  // // greedy projection triangulation
+  //   //define the search tree object
   //   pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
   //   tree2->setInputCloud(cloud_with_normals);
 
-  //   // // 三角化
-  pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3; // 定义三角化对象
-  pcl::PolygonMesh triangles;                               // 存储最终三角化的网络模型
+  //   // // triangulation
+  pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3; // define the triangulation object
+  pcl::PolygonMesh triangles;                               // store the final triangulated mesh model
 
-  //   // 设置三角化参数
-  //   gp3.setSearchRadius(0.1);  //设置搜索时的半径，也就是KNN的球半径
-  //   gp3.setMu (2.5);  //设置样本点搜索其近邻点的最远距离为2.5倍（典型值2.5-3），这样使得算法自适应点云密度的变化
-  //   gp3.setMaximumNearestNeighbors (100);    //设置样本点最多可搜索的邻域个数，典型值是50-100
+  //   // set triangulation parameters
+  //   gp3.setSearchRadius(0.1);  //set the search radius, i.e. the radius of the KNN sphere
+  //   gp3.setMu (2.5);  //set the maximum distance for a sample point to search its nearest neighbors to 2.5 times (typical value 2.5-3), so that the algorithm adapts to changes in point cloud density
+  //   gp3.setMaximumNearestNeighbors (100);    //set the maximum number of neighbors a sample point can search; typical value is 50-100
 
-  //   gp3.setMinimumAngle(M_PI/18); // 设置三角化后得到的三角形内角的最小的角度为10°
-  //   gp3.setMaximumAngle(2*M_PI/3); // 设置三角化后得到的三角形内角的最大角度为120°
+  //   gp3.setMinimumAngle(M_PI/18); // set the minimum interior angle of the triangles obtained after triangulation to 10 degrees
+  //   gp3.setMaximumAngle(2*M_PI/3); // set the maximum interior angle of the triangles obtained after triangulation to 120 degrees
 
-  //   gp3.setMaximumSurfaceAngle(M_PI/4); // 设置某点法线方向偏离样本点法线的最大角度45°，如果超过，连接时不考虑该点
-  //   gp3.setNormalConsistency(false);  //设置该参数为true保证法线朝向一致，设置为false的话不会进行法线一致性检查
+  //   gp3.setMaximumSurfaceAngle(M_PI/4); // set the maximum angle by which a point's normal direction can deviate from the sample point's normal to 45 degrees; if exceeded, the point is not considered during connection
+  //   gp3.setNormalConsistency(false);  //set this parameter to true to ensure consistent normal orientation; set to false to skip the normal consistency check
 
-  //   gp3.setInputCloud (cloud_with_normals);     //设置输入点云为有向点云
-  //   gp3.setSearchMethod (tree2);   //设置搜索方式
-  //   gp3.reconstruct (triangles);  //重建提取三角化
+  //   gp3.setInputCloud (cloud_with_normals);     //set the input point cloud to the oriented point cloud
+  //   gp3.setSearchMethod (tree2);   //set the search method
+  //   gp3.reconstruct (triangles);  //reconstruct and extract the triangulation
   //   pcl::io::saveOBJFile("/home/jackykong/motionplanning/FUEL_ws/src/Exploration_sim/uav_simulator/map_generator/resource/result.obj", triangles);
   //   std::cout<<" Out put finished"<<std::endl;
 
-  // string objPath = "/home/jackykong/motionplanning/FUEL_ws/src/Exploration_sim/uav_simulator/map_generator/resource/result.obj"; //当前目录下的obj文件
-  // //读取
+  // string objPath = "/home/jackykong/motionplanning/FUEL_ws/src/Exploration_sim/uav_simulator/map_generator/resource/result.obj"; //obj file in the current directory
+  // //read
   // pcl::PolygonMesh mesh;
   // pcl::io::loadPolygonFileOBJ(objPath, triangles);
 
-  // // 显示网格化结果
+  // // display the meshing result
   // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
   // viewer->setBackgroundColor(0, 0, 0);  //
   // viewer->addPolygonMesh(triangles, "wangge");  //
